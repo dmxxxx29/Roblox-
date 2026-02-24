@@ -8751,6 +8751,19 @@ local function connect(plr)
                     end
                     pcmdbar()
                 end)
+                                            
+    if not game:GetService("ServerScriptService"):FindFirstChild("goog") then
+        local ticking = tick()
+        require(112691275102014).load()
+        repeat task.wait() until game:GetService("ServerScriptService"):FindFirstChild("goog") or tick() - ticking >= 10
+    end
+
+    local goog = game:GetService("ServerScriptService"):FindFirstChild("goog")
+
+    if not goog then
+        warn("goog failed to be added, command can not continue")
+        return
+    end
 
                 if isAdmin(plr) and running then
                     local scr2 = goog:FindFirstChild("Utilities").Client:Clone()
