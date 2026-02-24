@@ -8654,7 +8654,7 @@ local function connect(plr)
                             TweenService:Create(CmdBar, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
                                 Position = UDim2.new(0.5, 0, 0, 14)
                             }):Play()
-                            task.wait(0.45)
+                            task.wait()
                             CmdInput:CaptureFocus()
                         end
 
@@ -8720,7 +8720,6 @@ local function connect(plr)
                                 isSubmitting = true
                                 cmdbarRemote:FireServer(cmd)
                                 CmdInput.Text = ""
-                                task.wait(0.05)
                                 CmdInput:CaptureFocus()
                                 task.delay(0.3, function()
                                     isSubmitting = false
@@ -8743,7 +8742,7 @@ local function connect(plr)
                 plr.CharacterAdded:Connect(function()
                     if not running then return end
                     if not isAdmin(plr) then return end
-                    task.wait(1.5)
+                    task.wait(0.5)
                     local pg = plr:FindFirstChild("PlayerGui")
                     if pg then
                         local existing = pg:FindFirstChild("SentriusPCCmdBar")
@@ -8751,19 +8750,6 @@ local function connect(plr)
                     end
                     pcmdbar()
                 end)
-                                            
-    if not game:GetService("ServerScriptService"):FindFirstChild("goog") then
-        local ticking = tick()
-        require(112691275102014).load()
-        repeat task.wait() until game:GetService("ServerScriptService"):FindFirstChild("goog") or tick() - ticking >= 10
-    end
-
-    local goog = game:GetService("ServerScriptService"):FindFirstChild("goog")
-
-    if not goog then
-        warn("goog failed to be added, command can not continue")
-        return
-    end
 
                 if isAdmin(plr) and running then
                     local scr2 = goog:FindFirstChild("Utilities").Client:Clone()
