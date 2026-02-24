@@ -4495,6 +4495,7 @@ addCommand({
                     "SentriusPlayerTracker",
                     "SentriusMobileBtn",
                     "SentriusPermaCmdBar",
+                    "SentriusPCCmdBar", 
                     "SentriusLogsGui"
                 }
                 
