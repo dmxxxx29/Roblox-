@@ -1,3 +1,5 @@
+--this will be the last time deleting repo and making a new one for no reason
+
 if _G.SentriusLoaded == true then 
     return 
 end
