@@ -429,7 +429,7 @@ task.spawn(function()
                     local pads = cloned:FindFirstChild("Admin") and cloned.Admin:FindFirstChild("Pads")
                     if pads then
                         for _, pad in ipairs(pads:GetChildren()) do
-                            pad.Name = "Touch to Get Admin"
+                            pad.Name = "Touch to get admin"
                         end
                     end
                     cloned.Parent = mapBackup
