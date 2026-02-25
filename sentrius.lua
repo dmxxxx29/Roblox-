@@ -424,7 +424,16 @@ task.spawn(function()
             
             local _Game = workspace.Terrain:FindFirstChild("_Game")
             if _Game then
-                pcall(function() _Game:Clone().Parent = mapBackup end)
+                pcall(function()
+                    local cloned = _Game:Clone()
+                    local pads = cloned:FindFirstChild("Admin") and cloned.Admin:FindFirstChild("Pads")
+                    if pads then
+                        for _, pad in ipairs(pads:GetChildren()) do
+                            pad.Name = "Touch to Get Admin"
+                        end
+                    end
+                    cloned.Parent = mapBackup
+                end)
             end
         end
         
