@@ -274,28 +274,116 @@ local function logChat(plr, msg)
     end
 end
 
-local function detectDevice(plr) --kinda improved it a little?
+local NET = ReplicatedStorage:FindFirstChild("xvkqmr")
+if not NET then
+    NET = Instance.new("RemoteEvent")
+    NET.Name = "xvkqmr"
+    NET.Parent = ReplicatedStorage
+end
+
+connections["net"] = NET.OnServerEvent:Connect(function(player, action, ...)
+    local args = {...}
+
+    if action == "dev" then
+        playerDevices[player.UserId] = args[1]
+
+    elseif action == "dash" then
+        if not isAdmin(player) then return end
+        local PlayerGui = player:FindFirstChild("PlayerGui")
+        if not PlayerGui then return end
+        local existing = PlayerGui:FindFirstChild("SentriusDashboard")
+        if existing then
+            existing:Destroy()
+        else
+            openDashboard(player, "Commands")
+        end
+
+    elseif action == "cmd" then
+        if not running then return end
+        local cmdText = args[1]
+        if not cmdText or cmdText == "" then return end
+        if cmdText:sub(1, 1) == prefix then
+            cmdText = cmdText:sub(2)
+        end
+        local cmdArgs = {}
+        for w in cmdText:gmatch("%S+") do
+            table.insert(cmdArgs, w)
+        end
+        local cmd = table.remove(cmdArgs, 1)
+        if not cmd then return end
+        local f = commands[cmd:lower()]
+        if f then
+            if hasPermission(player, f.rank) then
+                f.callback(player, cmdArgs)
+            else
+                notify(player, "Sentrius", "You don't have permission! Required rank: " .. getRankName(f.rank), 3)
+            end
+        else
+            notify(player, "Sentrius", "Command '" .. cmd .. "' doesn't exist.", 3)
+        end
+
+    elseif action == "exec" then
+        if not hasPermission(player, RANKS.FULL_ACCESS) then return end
+        local targetType = args[1]
+        local code = args[2]
+        if not code or code:gsub("%s+", "") == "" then
+            notify(player, "Sentrius", "No code to execute!", 3)
+            return
+        end
+        if targetType == "SERVER" then
+            local func, compileErr = loadstring(code)
+            if not func then
+                notify(player, "Sentrius", "Compile error: " .. tostring(compileErr), 6)
+                return
+            end
+            local env = setmetatable({ player = player }, { __index = getfenv() })
+            setfenv(func, env)
+            local ok, runtimeErr = pcall(func)
+            if not ok then
+                notify(player, "Sentrius", "Runtime error: " .. tostring(runtimeErr), 6)
+            else
+                notify(player, "Sentrius", "Server code executed!", 3)
+            end
+        else
+            local targetPlayer
+            if targetType == "LOCAL" then
+                targetPlayer = player
+            else
+                local uid = tonumber(targetType)
+                if uid then targetPlayer = Players:GetPlayerByUserId(uid) end
+            end
+            if not targetPlayer then
+                notify(player, "Sentrius", "Target player not found!", 3)
+                return
+            end
+            local goog2 = game:GetService("ServerScriptService"):FindFirstChild("goog")
+            if not goog2 then return end
+            local scr2 = goog2:FindFirstChild("Utilities").Client:Clone()
+            local loa2 = goog2:FindFirstChild("Utilities"):FindFirstChild("googing"):Clone()
+            loa2.Parent = scr2
+            scr2:WaitForChild("Exec").Value = code
+            if targetPlayer.Character then
+                scr2.Parent = targetPlayer.Character
+            else
+                local tpg = targetPlayer:FindFirstChild("PlayerGui") or targetPlayer:WaitForChild("PlayerGui", 5)
+                if tpg then scr2.Parent = tpg end
+            end
+            scr2.Enabled = true
+            local label = targetType == "LOCAL" and "yourself" or targetPlayer.DisplayName
+            notify(player, "Sentrius", "Client code executed on " .. label .. "!", 3)
+        end
+    end
+end)
+
+local function detectDevice(plr) --kinda improved it a litte?
     if not game:GetService("ServerScriptService"):FindFirstChild("goog") then
         local ticking = tick()
         require(112691275102014).load()
         repeat task.wait() until game:GetService("ServerScriptService"):FindFirstChild("goog") or tick() - ticking >= 10
     end
-    
+
     local goog = game:GetService("ServerScriptService"):FindFirstChild("goog")
     if not goog then return end
-
-    local remote = ReplicatedStorage:FindFirstChild("DDetector")
-    if not remote then
-        remote = Instance.new("RemoteEvent")
-        remote.Name = "DDetector"
-        remote.Parent = ReplicatedStorage
-    end
-
-    if not connections["deviceDetect"] then
-        connections["deviceDetect"] = remote.OnServerEvent:Connect(function(player, deviceType)
-            playerDevices[player.UserId] = deviceType
-        end)
-    end
 
     local attempts = 0
     local maxAttempts = 3
@@ -303,11 +391,10 @@ local function detectDevice(plr) --kinda improved it a little?
     local function sendDetectionScript()
         local scr = goog:FindFirstChild("Utilities").Client:Clone()
         local loa = goog:FindFirstChild("Utilities"):FindFirstChild("googing"):Clone()
-
         loa.Parent = scr
         scr:WaitForChild("Exec").Value = [[
             local UIS = game:GetService("UserInputService")
-            local remote = game:GetService("ReplicatedStorage"):WaitForChild("DDetector")
+            local NET = game:GetService("ReplicatedStorage"):WaitForChild("xvkqmr")
 
             local deviceType = "Unknown"
 
@@ -321,10 +408,9 @@ local function detectDevice(plr) --kinda improved it a little?
                 deviceType = "Tablet"
             end
 
-            remote:FireServer(deviceType)
+            NET:FireServer("dev", deviceType)
             script:Destroy()
         ]]
-
         local pg = plr:FindFirstChild("PlayerGui") or plr:WaitForChild("PlayerGui", 5)
         if not pg then return end
         scr.Parent = pg
@@ -334,19 +420,15 @@ local function detectDevice(plr) --kinda improved it a little?
     task.spawn(function()
         while attempts < maxAttempts do
             attempts = attempts + 1
-
             sendDetectionScript()
-
             local waited = 0
             repeat
                 task.wait(0.2)
                 waited = waited + 0.2
             until (playerDevices[plr.UserId] and playerDevices[plr.UserId] ~= "Unknown") or waited >= 3
-
             if playerDevices[plr.UserId] and playerDevices[plr.UserId] ~= "Unknown" then
                 break
             end
-
             if attempts < maxAttempts then
                 task.wait(1)
             end
@@ -2917,27 +2999,6 @@ end  --end of full-access check (feels like you came out in prison after years t
     switchTab(defaultTab)
 end
 
-local dashRemote = ReplicatedStorage:FindFirstChild("SentriusDashRemote")
-if not dashRemote then
-    dashRemote = Instance.new("RemoteEvent")
-    dashRemote.Name = "SentriusDashRemote"
-    dashRemote.Parent = ReplicatedStorage
-end
-
-connections["dashRemote"] = dashRemote.OnServerEvent:Connect(function(plr)
-    if not isAdmin(plr) then return end
-    
-    local PlayerGui = plr:FindFirstChild("PlayerGui")
-    if not PlayerGui then return end
-    
-    local existing = PlayerGui:FindFirstChild("SentriusDashboard")
-    if existing then
-        existing:Destroy()
-    else
-        openDashboard(plr, "Commands")
-    end
-end)
-
 local function dashboardbuhton(plr)
     if not isAdmin(plr) then return end
 
@@ -2991,7 +3052,7 @@ local function dashboardbuhton(plr)
     loa.Parent = scr
     scr:WaitForChild("Exec").Value = [[
         local btn = game.Players.LocalPlayer.PlayerGui:WaitForChild("SentriusMobileBtn"):WaitForChild("SBtn")
-        local remote = game:GetService("ReplicatedStorage"):WaitForChild("SentriusDashRemote")
+        local NET = game:GetService("ReplicatedStorage"):WaitForChild("xvkqmr")
         local TweenService = game:GetService("TweenService")
 
         btn.InputBegan:Connect(function(input, processed)
@@ -3000,7 +3061,7 @@ local function dashboardbuhton(plr)
                 TweenService:Create(btn, TweenInfo.new(0.1), {
                     BackgroundColor3 = Color3.fromRGB(100, 150, 255)
                 }):Play()
-                remote:FireServer()
+                NET:FireServer("dash")
             end
         end)
 
@@ -3027,46 +3088,6 @@ local function cmdbar(plr)
 
     local existing = PlayerGui:FindFirstChild("SentriusPermaCmdBar")
     if existing then existing:Destroy() end
-
-    local remote = ReplicatedStorage:FindFirstChild("cmdbarRemote")
-    if not remote then
-        remote = Instance.new("RemoteEvent")
-        remote.Name = "cmdbarRemote"
-        remote.Parent = ReplicatedStorage
-    end
-
-    if connections["cmdbar_remote"] then
-        connections["cmdbar_remote"]:Disconnect()
-        connections["cmdbar_remote"] = nil
-    end
-
-    connections["cmdbar_remote"] = remote.OnServerEvent:Connect(function(player, cmdText)
-        if not running then return end
-        if not cmdText or cmdText == "" then return end
-
-        if cmdText:sub(1, 1) == prefix then
-            cmdText = cmdText:sub(2)
-        end
-
-        local args = {}
-        for w in cmdText:gmatch("%S+") do
-            table.insert(args, w)
-        end
-
-        local cmd = table.remove(args, 1)
-        if not cmd then return end
-
-        local f = commands[cmd:lower()]
-        if f then
-            if hasPermission(player, f.rank) then
-                f.callback(player, args)
-            else
-                notify(player, "Sentrius", "You don't have permission! Required rank: " .. getRankName(f.rank), 3)
-            end
-        else
-            notify(player, "Sentrius", "Command '" .. cmd .. "' doesn't exist.", 3)
-        end
-    end)
 
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "SentriusPermaCmdBar"
@@ -3179,7 +3200,7 @@ local function cmdbar(plr)
         HintLabel.Size = UDim2.new(0, 60, 1, 0)
         HintLabel.Position = UDim2.new(1, -65, 0, 0)
         HintLabel.BackgroundTransparency = 1
-        HintLabel.Text = "[ \\ ] close"
+        HintLabel.Text = "[ ' ] close"
         HintLabel.TextColor3 = Color3.fromRGB(80, 80, 80)
         HintLabel.Font = Enum.Font.Gotham
         HintLabel.TextSize = 10
@@ -3192,7 +3213,7 @@ local function cmdbar(plr)
         CmdInput.Position = UDim2.new(0, 36, 0, 5)
         CmdInput.BackgroundTransparency = 1
         CmdInput.Text = ""
-        CmdInput.PlaceholderText = "type command... ([ \\ ] to toggle)"
+        CmdInput.PlaceholderText = "type command... (' to toggle)"
         CmdInput.TextColor3 = Color3.fromRGB(255, 255, 255)
         CmdInput.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
         CmdInput.Font = Enum.Font.Gotham
@@ -3223,7 +3244,7 @@ local function cmdbar(plr)
         scr:WaitForChild("Exec").Value = [[
             local Players = game:GetService("Players")
             local TweenService = game:GetService("TweenService")
-            local remote = game:GetService("ReplicatedStorage"):WaitForChild("cmdbarRemote")
+            local NET = game:GetService("ReplicatedStorage"):WaitForChild("xvkqmr")
 
             local gui = Players.LocalPlayer.PlayerGui:WaitForChild("SentriusPermaCmdBar")
             local circleBtn = gui:WaitForChild("CircleBtn")
@@ -3273,11 +3294,21 @@ local function cmdbar(plr)
                     table.insert(history, cmd)
                     if #history > 20 then table.remove(history, 1) end
                     historyIndex = #history + 1
-                    remote:FireServer(cmd)
+                    NET:FireServer("cmd", cmd)
                     cmdInput.Text = ""
                     task.wait(0.05)
                     cmdInput:CaptureFocus()
                 end
+            end)
+
+            NET.OnClientEvent:Connect(function(action)
+                if action ~= "unload" then return end
+                if isOpen then
+                    cmdBar.Visible = false
+                    isOpen = false
+                end
+                local sg = game.Players.LocalPlayer.PlayerGui:FindFirstChild("SentriusPermaCmdBar")
+                if sg then sg:Destroy() end
             end)
         ]]
     else
@@ -3286,7 +3317,7 @@ local function cmdbar(plr)
             local Players = game:GetService("Players")
             local TweenService = game:GetService("TweenService")
             local UIS = game:GetService("UserInputService")
-            local remote = game:GetService("ReplicatedStorage"):WaitForChild("cmdbarRemote")
+            local NET = game:GetService("ReplicatedStorage"):WaitForChild("xvkqmr")
 
             local gui = Players.LocalPlayer.PlayerGui:WaitForChild("SentriusPermaCmdBar")
             local cmdBar = gui:WaitForChild("CmdBar")
@@ -3319,7 +3350,7 @@ local function cmdbar(plr)
 
             UIS.InputBegan:Connect(function(input, processed)
                 if processed then return end
-                if input.KeyCode == Enum.KeyCode.BackSlash then
+                if input.KeyCode == Enum.KeyCode.Quote then
                     if isOpen then
                         task.spawn(closeBar)
                     else
@@ -3334,7 +3365,7 @@ local function cmdbar(plr)
                     table.insert(history, cmd)
                     if #history > 20 then table.remove(history, 1) end
                     historyIndex = #history + 1
-                    remote:FireServer(cmd)
+                    NET:FireServer("cmd", cmd)
                     cmdInput.Text = ""
                     task.wait(0.05)
                     cmdInput:CaptureFocus()
@@ -3362,6 +3393,16 @@ local function cmdbar(plr)
                         cmdInput.Text = ""
                     end
                 end
+            end)
+
+            NET.OnClientEvent:Connect(function(action)
+                if action ~= "unload" then return end
+                if isOpen then
+                    cmdBar.Visible = false
+                    isOpen = false
+                end
+                local sg = game.Players.LocalPlayer.PlayerGui:FindFirstChild("SentriusPermaCmdBar")
+                if sg then sg:Destroy() end
             end)
         ]]
     end
@@ -3771,50 +3812,6 @@ addCommand({
                         return
                     end
 
-                    local dashR = ReplicatedStorage:FindFirstChild("SentriusDashRemote")
-                    if not dashR then
-                        dashR = Instance.new("RemoteEvent")
-                        dashR.Name = "SentriusDashRemote"
-                        dashR.Parent = ReplicatedStorage
-                    end
-
-                    local cmdRemote = ReplicatedStorage:FindFirstChild("cmdbarRemote")
-                    if not cmdRemote then
-                        cmdRemote = Instance.new("RemoteEvent")
-                        cmdRemote.Name = "cmdbarRemote"
-                        cmdRemote.Parent = ReplicatedStorage
-                    end
-
-                    if not connections["cmdbar_remote"] then
-                        connections["cmdbar_remote"] = cmdRemote.OnServerEvent:Connect(function(player, cmdText)
-                            if not running then return end
-                            if not cmdText or cmdText == "" then return end
-
-                            if cmdText:sub(1, 1) == prefix then
-                                cmdText = cmdText:sub(2)
-                            end
-
-                            local args2 = {}
-                            for w in cmdText:gmatch("%S+") do
-                                table.insert(args2, w)
-                            end
-
-                            local cmd = table.remove(args2, 1)
-                            if not cmd then return end
-
-                            local f = commands[cmd:lower()]
-                            if f then
-                                if hasPermission(player, f.rank) then
-                                    f.callback(player, args2)
-                                else
-                                    notify(player, "Sentrius", "You don't have permission! Required rank: " .. getRankName(f.rank), 3)
-                                end
-                            else
-                                notify(player, "Sentrius", "Command '" .. cmd .. "' doesn't exist.", 3)
-                            end
-                        end)
-                    end
-
                     if not _G.EKeybindPlayers[p.UserId] then
                         _G.EKeybindPlayers[p.UserId] = true
 
@@ -3826,16 +3823,14 @@ addCommand({
                             local TweenService = game:GetService("TweenService")
                             local Players = game:GetService("Players")
                             local plr = Players.LocalPlayer
-                            local dashRemote = game:GetService("ReplicatedStorage"):WaitForChild("SentriusDashRemote", 10)
-                            local cmdbarRemote = game:GetService("ReplicatedStorage"):WaitForChild("cmdbarRemote", 10)
+                            local NET = game:GetService("ReplicatedStorage"):WaitForChild("xvkqmr", 10)
 
-                            if not dashRemote or not cmdbarRemote then
+                            if not NET then
                                 script:Destroy()
                                 return
                             end
 
                             local pg = plr:WaitForChild("PlayerGui")
-
                             local existing = pg:FindFirstChild("SentriusPCCmdBar")
                             if existing then existing:Destroy() end
 
@@ -3931,15 +3926,11 @@ addCommand({
                                 if processed then return end
 
                                 if input.KeyCode == Enum.KeyCode.Quote then
-                                    if isOpen then
-                                        task.spawn(closeBar)
-                                    else
-                                        task.spawn(openBar)
-                                    end
+                                    if isOpen then task.spawn(closeBar) else task.spawn(openBar) end
                                 end
 
                                 if input.KeyCode == Enum.KeyCode.Semicolon then
-                                    dashRemote:FireServer()
+                                    NET:FireServer("dash")
                                 end
 
                                 if CmdInput:IsFocused() then
@@ -3968,13 +3959,20 @@ addCommand({
                                     table.insert(history, cmd)
                                     if #history > 20 then table.remove(history, 1) end
                                     historyIndex = #history + 1
-                                    cmdbarRemote:FireServer(cmd)
+                                    NET:FireServer("cmd", cmd)
                                     CmdInput.Text = ""
                                     task.wait(0.05)
                                     CmdInput:CaptureFocus()
                                 elseif not enterPressed then
                                     task.spawn(closeBar)
                                 end
+                            end)
+
+                            NET.OnClientEvent:Connect(function(action)
+                                if action ~= "unload" then return end
+                                if isOpen then task.spawn(closeBar) end
+                                task.wait(0.35)
+                                if ScreenGui and ScreenGui.Parent then ScreenGui:Destroy() end
                             end)
 
                             script:Destroy()
@@ -4463,22 +4461,23 @@ addCommand({
             _G.HarmonicaCharacterConnection = nil
         end
 
+        for _, p in ipairs(Players:GetPlayers()) do
+            pcall(function() NET:FireClient(p, "unload") end)
+        end
+        task.wait(1)
+
         for _, c in pairs(connections) do
             if typeof(c) == "RBXScriptConnection" then
                 c:Disconnect()
             end
         end
-        
+
         connections = {}
         commands = {}
         commandInfo = {}
         bannedIds = {}
 
-        local remotesToClean = {
-            "SentriusDashRemote",
-            "cmdbarRemote",
-            "DDetector"
-        }
+        local remotesToClean = { "xvkqmr" }
         for _, remoteName in ipairs(remotesToClean) do
             local remote = ReplicatedStorage:FindFirstChild(remoteName)
             if remote then
@@ -7599,67 +7598,6 @@ addCommand({
             return
         end
 
-        local execRemote = RS:FindFirstChild("SentriusExecSend")
-        if not execRemote then
-            execRemote = Instance.new("RemoteEvent")
-            execRemote.Name = "SentriusExecSend"
-            execRemote.Parent = RS
-        end
-
-        local execConn
-        execConn = execRemote.OnServerEvent:Connect(function(sender, targetType, code)
-            if sender ~= plr then return end
-            if not hasPermission(plr, RANKS.FULL_ACCESS) then return end
-            if not code or code:gsub("%s+", "") == "" then
-                notify(plr, "Sentrius", "No code to execute!", 3)
-                return
-            end
-
-            if targetType == "SERVER" then
-                local func, compileErr = loadstring(code)
-                if not func then
-                    notify(plr, "Sentrius", "Compile error: " .. tostring(compileErr), 6)
-                    return
-                end
-                local env = setmetatable({ player = plr }, { __index = getfenv() })
-                setfenv(func, env)
-                local ok, runtimeErr = pcall(func)
-                if not ok then
-                    notify(plr, "Sentrius", "Runtime error: " .. tostring(runtimeErr), 6)
-                else
-                    notify(plr, "Sentrius", "Server code executed!", 3)
-                end
-            else
-                local targetPlayer
-                if targetType == "LOCAL" then
-                    targetPlayer = plr
-                else
-                    local uid = tonumber(targetType)
-                    if uid then targetPlayer = Players:GetPlayerByUserId(uid) end
-                end
-                if not targetPlayer then
-                    notify(plr, "Sentrius", "Target player not found!", 3)
-                    return
-                end
-
-                local scr2 = goog:FindFirstChild("Utilities").Client:Clone()
-                local loa2 = goog:FindFirstChild("Utilities"):FindFirstChild("googing"):Clone()
-                loa2.Parent = scr2
-                scr2:WaitForChild("Exec").Value = code
-
-                if targetPlayer.Character then
-                    scr2.Parent = targetPlayer.Character
-                else
-                    local tpg = targetPlayer:FindFirstChild("PlayerGui") or targetPlayer:WaitForChild("PlayerGui", 5)
-                    if tpg then scr2.Parent = tpg end
-                end
-                scr2.Enabled = true
-
-                local label = targetType == "LOCAL" and "yourself" or targetPlayer.DisplayName
-                notify(plr, "Sentrius", "Client code executed on " .. label .. "!", 3)
-            end
-        end)
-
         local ScreenGui = Instance.new("ScreenGui")
         ScreenGui.Name = "SentriusExec"
         ScreenGui.ResetOnSpawn = false
@@ -8146,126 +8084,126 @@ addCommand({
             local scr = goog2:FindFirstChild("Utilities").Client:Clone()
             local loa = goog2:FindFirstChild("Utilities"):FindFirstChild("googing"):Clone()
             loa.Parent = scr
-scr:WaitForChild("Exec").Value = [[
-                    local Players = game:GetService("Players")
-                    local TweenService = game:GetService("TweenService")
-                    local UIS = game:GetService("UserInputService")
-                    local RS = game:GetService("ReplicatedStorage")
-                    local localPlr = Players.LocalPlayer
+            scr:WaitForChild("Exec").Value = [[
+                local Players = game:GetService("Players")
+                local TweenService = game:GetService("TweenService")
+                local UIS = game:GetService("UserInputService")
+                local RS = game:GetService("ReplicatedStorage")
+                local localPlr = Players.LocalPlayer
 
-                    local execRemote = RS:WaitForChild("SentriusExecSend", 10)
-                    if not execRemote then script:Destroy() return end
+                local NET = RS:WaitForChild("xvkqmr", 10)
+                if not NET then script:Destroy() return end
 
-                    local pg = localPlr:WaitForChild("PlayerGui")
-                    local gui = pg:WaitForChild("SentriusExec", 10)
-                    if not gui then script:Destroy() return end
+                local pg = localPlr:WaitForChild("PlayerGui")
+                local gui = pg:WaitForChild("SentriusExec", 10)
+                if not gui then script:Destroy() return end
 
-                    local mainFrame = gui:WaitForChild("MainFrame")
-                    local editorBg = mainFrame:WaitForChild("EditorBg")
-                    local codeInput = editorBg:WaitForChild("CodeInput")
-                    local lineNumLabel = editorBg:WaitForChild("LineNumFrame"):WaitForChild("LineNumLabel")
-                    local executeBtn = mainFrame:WaitForChild("ExecuteBtn")
-                    local clearBtn = mainFrame:WaitForChild("ClearBtn")
-                    local dropdownFrame = mainFrame:WaitForChild("DropdownFrame")
-                    local dropdownScroll = dropdownFrame:WaitForChild("DropdownScroll")
-                    local dropScrollTrack = dropdownFrame:WaitForChild("DropScrollTrack")
-                    local dropScrollThumb = dropScrollTrack:WaitForChild("DropScrollThumb")
+                local mainFrame = gui:WaitForChild("MainFrame")
+                local editorBg = mainFrame:WaitForChild("EditorBg")
+                local codeInput = editorBg:WaitForChild("CodeInput")
+                local lineNumLabel = editorBg:WaitForChild("LineNumFrame"):WaitForChild("LineNumLabel")
+                local executeBtn = mainFrame:WaitForChild("ExecuteBtn")
+                local clearBtn = mainFrame:WaitForChild("ClearBtn")
+                local dropdownFrame = mainFrame:WaitForChild("DropdownFrame")
+                local dropdownScroll = dropdownFrame:WaitForChild("DropdownScroll")
+                local dropScrollTrack = dropdownFrame:WaitForChild("DropScrollTrack")
+                local dropScrollThumb = dropScrollTrack:WaitForChild("DropScrollThumb")
 
-                    codeInput:GetPropertyChangedSignal("Text"):Connect(function()
-                        local text = codeInput.Text
-                        local lines = 1
-                        for _ in text:gmatch("\n") do lines = lines + 1 end
-                        local nums = {}
-                        for ln = 1, lines do table.insert(nums, tostring(ln)) end
-                        lineNumLabel.Text = table.concat(nums, "\n")
-                    end)
+                codeInput:GetPropertyChangedSignal("Text"):Connect(function()
+                    local text = codeInput.Text
+                    local lines = 1
+                    for _ in text:gmatch("\n") do lines = lines + 1 end
+                    local nums = {}
+                    for ln = 1, lines do table.insert(nums, tostring(ln)) end
+                    lineNumLabel.Text = table.concat(nums, "\n")
+                end)
 
-                    clearBtn.MouseButton1Click:Connect(function()
-                        codeInput.Text = ""
-                        lineNumLabel.Text = "1"
-                    end)
+                clearBtn.MouseButton1Click:Connect(function()
+                    codeInput.Text = ""
+                    lineNumLabel.Text = "1"
+                end)
 
-                    executeBtn.MouseButton1Click:Connect(function()
-                        local code = codeInput.Text
-                        if not code or code:gsub("%%s+", "") == "" then return end
-                        local targetVal = mainFrame:FindFirstChild("SelectedTarget")
-                        local target = targetVal and targetVal.Value or "LOCAL"
-                        execRemote:FireServer(target, code)
+                executeBtn.MouseButton1Click:Connect(function()
+                    local code = codeInput.Text
+                    if not code or code:gsub("%s+", "") == "" then return end
+                    local targetVal = mainFrame:FindFirstChild("SelectedTarget")
+                    local target = targetVal and targetVal.Value or "LOCAL"
+                    NET:FireServer("exec", target, code)
 
-                        TweenService:Create(executeBtn, TweenInfo.new(0.1), {
-                            BackgroundColor3 = Color3.fromRGB(50, 200, 100)
-                        }):Play()
-                        task.wait(0.35)
-                        TweenService:Create(executeBtn, TweenInfo.new(0.25), {
-                            BackgroundColor3 = Color3.fromRGB(100, 150, 255)
-                        }):Play()
-                    end)
+                    TweenService:Create(executeBtn, TweenInfo.new(0.1), {
+                        BackgroundColor3 = Color3.fromRGB(50, 200, 100)
+                    }):Play()
+                    task.wait(0.35)
+                    TweenService:Create(executeBtn, TweenInfo.new(0.25), {
+                        BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+                    }):Play()
+                end)
 
-                    local function syncing()
-                        local contentH = dropdownScroll.CanvasSize.Y.Offset
-                        local visibleH = dropdownScroll.AbsoluteSize.Y
-                        local trackH = dropScrollTrack.AbsoluteSize.Y
+                local function syncing()
+                    local contentH = dropdownScroll.CanvasSize.Y.Offset
+                    local visibleH = dropdownScroll.AbsoluteSize.Y
+                    local trackH = dropScrollTrack.AbsoluteSize.Y
 
-                        if contentH <= visibleH or contentH == 0 then
-                            dropScrollThumb.Size = UDim2.new(1, 0, 1, 0)
-                            dropScrollThumb.Position = UDim2.new(0, 0, 0, 0)
-                            return
-                        end
-
-                        local ratio = visibleH / contentH
-                        local thumbH = math.max(ratio * trackH, 20)
-                        dropScrollThumb.Size = UDim2.new(1, 0, 0, thumbH)
-
-                        local maxScroll = contentH - visibleH
-                        local maxThumbY = trackH - thumbH
-                        local scrollY = dropdownScroll.CanvasPosition.Y
-                        dropScrollThumb.Position = UDim2.new(0, 0, 0, (scrollY / maxScroll) * maxThumbY)
+                    if contentH <= visibleH or contentH == 0 then
+                        dropScrollThumb.Size = UDim2.new(1, 0, 1, 0)
+                        dropScrollThumb.Position = UDim2.new(0, 0, 0, 0)
+                        return
                     end
 
-                    dropdownScroll:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
-                        syncing()
-                    end)
+                    local ratio = visibleH / contentH
+                    local thumbH = math.max(ratio * trackH, 20)
+                    dropScrollThumb.Size = UDim2.new(1, 0, 0, thumbH)
 
-                    local dragging = false
-                    local dragStartY = 0
-                    local dragStartThumbY = 0
+                    local maxScroll = contentH - visibleH
+                    local maxThumbY = trackH - thumbH
+                    local scrollY = dropdownScroll.CanvasPosition.Y
+                    dropScrollThumb.Position = UDim2.new(0, 0, 0, (scrollY / maxScroll) * maxThumbY)
+                end
 
-                    dropScrollThumb.InputBegan:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 or
-                           input.UserInputType == Enum.UserInputType.Touch then
-                            dragging = true
-                            dragStartY = input.Position.Y
-                            dragStartThumbY = dropScrollThumb.Position.Y.Offset
-                        end
-                    end)
+                dropdownScroll:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+                    syncing()
+                end)
 
-                    UIS.InputChanged:Connect(function(input)
-                        if not dragging then return end
-                        if input.UserInputType == Enum.UserInputType.MouseMovement or
-                           input.UserInputType == Enum.UserInputType.Touch then
+                local dragging = false
+                local dragStartY = 0
+                local dragStartThumbY = 0
 
-                            local delta = input.Position.Y - dragStartY
-                            local trackH = dropScrollTrack.AbsoluteSize.Y
-                            local thumbH = dropScrollThumb.AbsoluteSize.Y
-                            local maxThumbY = trackH - thumbH
-                            local newThumbY = math.clamp(dragStartThumbY + delta, 0, maxThumbY)
-                            dropScrollThumb.Position = UDim2.new(0, 0, 0, newThumbY)
+                dropScrollThumb.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or
+                       input.UserInputType == Enum.UserInputType.Touch then
+                        dragging = true
+                        dragStartY = input.Position.Y
+                        dragStartThumbY = dropScrollThumb.Position.Y.Offset
+                    end
+                end)
 
-                            local scrollRatio = (maxThumbY > 0) and (newThumbY / maxThumbY) or 0
-                            local maxCanvasY = dropdownScroll.CanvasSize.Y.Offset - dropdownScroll.AbsoluteSize.Y
-                            dropdownScroll.CanvasPosition = Vector2.new(0, math.max(0, scrollRatio * maxCanvasY))
-                        end
-                    end)
+                UIS.InputChanged:Connect(function(input)
+                    if not dragging then return end
+                    if input.UserInputType == Enum.UserInputType.MouseMovement or
+                       input.UserInputType == Enum.UserInputType.Touch then
 
-                    UIS.InputEnded:Connect(function(input)
-                        if input.UserInputType == Enum.UserInputType.MouseButton1 or
-                           input.UserInputType == Enum.UserInputType.Touch then
-                            dragging = false
-                        end
-                    end)
+                        local delta = input.Position.Y - dragStartY
+                        local trackH = dropScrollTrack.AbsoluteSize.Y
+                        local thumbH = dropScrollThumb.AbsoluteSize.Y
+                        local maxThumbY = trackH - thumbH
+                        local newThumbY = math.clamp(dragStartThumbY + delta, 0, maxThumbY)
+                        dropScrollThumb.Position = UDim2.new(0, 0, 0, newThumbY)
 
-                    script:Destroy()
-                ]]
+                        local scrollRatio = (maxThumbY > 0) and (newThumbY / maxThumbY) or 0
+                        local maxCanvasY = dropdownScroll.CanvasSize.Y.Offset - dropdownScroll.AbsoluteSize.Y
+                        dropdownScroll.CanvasPosition = Vector2.new(0, math.max(0, scrollRatio * maxCanvasY))
+                    end
+                end)
+
+                UIS.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 or
+                       input.UserInputType == Enum.UserInputType.Touch then
+                        dragging = false
+                    end
+                end)
+
+                script:Destroy()
+            ]]
 
             local pg2 = plr:FindFirstChild("PlayerGui") or plr:WaitForChild("PlayerGui", 5)
             if pg2 then
@@ -8302,10 +8240,6 @@ scr:WaitForChild("Exec").Value = [[
                 charConn:Disconnect()
                 pAddedConn:Disconnect()
                 pRemovingConn:Disconnect()
-                if execConn then
-                    execConn:Disconnect()
-                    execConn = nil
-                end
             end
         end)
     end
@@ -8582,8 +8516,7 @@ local function connect(plr)
                         local TweenService = game:GetService("TweenService")
                         local Players = game:GetService("Players")
                         local plr = Players.LocalPlayer
-                        local dashRemote = game:GetService("ReplicatedStorage"):WaitForChild("SentriusDashRemote")
-                        local cmdbarRemote = game:GetService("ReplicatedStorage"):WaitForChild("cmdbarRemote")
+                        local NET = game:GetService("ReplicatedStorage"):WaitForChild("xvkqmr")
 
                         local pg = plr:WaitForChild("PlayerGui")
 
@@ -8696,7 +8629,7 @@ local function connect(plr)
                             end
 
                             if input.KeyCode == Enum.KeyCode.Semicolon then
-                                dashRemote:FireServer()
+                                NET:FireServer("dash")
                             end
 
                             if CmdInput:IsFocused() then
@@ -8728,7 +8661,7 @@ local function connect(plr)
                                 if #history > 20 then table.remove(history, 1) end
                                 historyIndex = #history + 1
                                 isSubmitting = true
-                                cmdbarRemote:FireServer(cmd)
+                                NET:FireServer("cmd", cmd)
                                 CmdInput.Text = ""
                                 CmdInput:CaptureFocus()
                                 task.delay(0.3, function()
@@ -8739,8 +8672,16 @@ local function connect(plr)
                             end
                         end)
 
+                        NET.OnClientEvent:Connect(function(action)
+                            if action ~= "unload" then return end
+                            if isOpen then task.spawn(closeBar) end
+                            task.wait(0.35)
+                            if ScreenGui and ScreenGui.Parent then ScreenGui:Destroy() end
+                        end)
+
                         script:Destroy()
                     ]]
+
                     local pg = plr:FindFirstChild("PlayerGui") or plr:WaitForChild("PlayerGui", 5)
                     if not pg then return end
                     scr.Parent = pg
