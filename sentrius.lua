@@ -8384,6 +8384,61 @@ addCommand({
     end
 })
 
+addCommand({
+    name = "tools",
+    aliases = {"pooptools"},
+    desc = "Give poop tools to a player",
+    usage = prefix .. "poop [player (optional)]",
+    callback = function(plr, args)
+        local target = plr
+
+        if args and #args > 0 then
+            local targets = GetPlayer(args[1], plr)
+            if targets and #targets > 0 then
+                target = targets[1]
+            else
+                target = plr
+            end
+        end
+
+        local success, err = pcall(function()
+            require(16052382566).PoopToolsV2(target.Name)
+        end)
+
+        if success then
+            if target == plr then
+                notify(plr, "Sentrius", "Gave poop tools to yourself!", 3)
+            else
+                notify(plr, "Sentrius", "Gave poop tools to " .. target.DisplayName .. "!", 3)
+            end
+        else
+            notify(plr, "Sentrius", "Failed to load poop tools: " .. tostring(err), 4)
+        end
+    end
+})
+
+addCommand({
+    name = "yemadmin",
+    aliases = {"yem"},
+    desc = "Load YemAdmin",
+    usage = prefix .. "yem",
+    rank = RANKS.SENIOR_MOD,
+    callback = function(plr, args)
+        local success, err = pcall(function()
+            local code = game:GetService("HttpService"):GetAsync("https://raw.githubusercontent.com/Laamy/YemAdmin/refs/heads/master/src/admin.lua")
+            local chunk, loadErr = loadstring(code, "Cattails")
+            assert(chunk, "Failed to get YemAdmin.lua; " .. tostring(loadErr))
+            chunk()
+        end)
+
+        if success then
+            notify(plr, "YemAdmin", "YemAdmin loaded!", 3)
+        else
+            notify(plr, "YemAdmin", "failed to load: " .. tostring(err), 4)
+        end
+    end
+})
+
 local function connect(plr)
     playerNames[plr.Name] = true
     playerNames[plr.DisplayName] = true
