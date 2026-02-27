@@ -8516,11 +8516,14 @@ addCommand({
                 return false
             end
 
-            local function destroyUI()
-                local existing = pg:FindFirstChild("SentriusDrawUI")
-                if existing then existing:Destroy() end
-                currentPanel = nil
-            end
+        local function destroyUI()
+            local existing = pg:FindFirstChild("SentriusDrawUI")
+            if existing then existing:Destroy() end
+            local existingFreeze = pg:FindFirstChild("SentriusFreezeUI")
+            if existingFreeze then existingFreeze:Destroy() end
+            cam.CameraType = Enum.CameraType.Custom
+            currentPanel = nil
+        end
 
             local function buildUI()
                 destroyUI()
@@ -8609,6 +8612,65 @@ addCommand({
                 end)
 
                 currentPanel = Panel
+                if isMobile then
+                    local freezeGui = Instance.new("ScreenGui")
+                    freezeGui.Name = "SentriusFreezeUI"
+                    freezeGui.ResetOnSpawn = false
+                    freezeGui.Parent = pg
+
+                    local freezeBtn = Instance.new("TextButton")
+                    freezeBtn.Size = UDim2.new(0, 80, 0, 34)
+                    freezeBtn.Position = UDim2.new(0.5, -40, 0, 68)
+                    freezeBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                    freezeBtn.BackgroundTransparency = 0.1
+                    freezeBtn.BorderSizePixel = 0
+                    freezeBtn.Text = "🔓 CAM"
+                    freezeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    freezeBtn.TextSize = 12
+                    freezeBtn.Font = Enum.Font.GothamBold
+                    freezeBtn.Parent = freezeGui
+
+                    Instance.new("UICorner", freezeBtn).CornerRadius = UDim.new(0, 8)
+
+                    local freezeStroke = Instance.new("UIStroke", freezeBtn)
+                    freezeStroke.Color = Color3.fromRGB(100, 150, 255)
+                    freezeStroke.Thickness = 1.5
+
+                    local frozen = false
+                    local frozenCFrame = nil
+
+                    freezeBtn.InputBegan:Connect(function(inp, proc)
+                        if proc then return end
+                        if inp.UserInputType ~= Enum.UserInputType.Touch then return end
+                        frozen = not frozen
+                        if frozen then
+                            frozenCFrame = cam.CFrame
+                            cam.CameraType = Enum.CameraType.Scriptable
+                            cam.CFrame = frozenCFrame
+                            freezeBtn.Text = "🔒 CAM"
+                            freezeBtn.BackgroundColor3 = Color3.fromRGB(50, 100, 200)
+                            freezeStroke.Color = Color3.fromRGB(150, 200, 255)
+                        else
+                            cam.CameraType = Enum.CameraType.Custom
+                            frozenCFrame = nil
+                            freezeBtn.Text = "🔓 CAM"
+                            freezeBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                            freezeStroke.Color = Color3.fromRGB(100, 150, 255)
+                        end
+                    end)
+
+                    RunService.RenderStepped:Connect(function()
+                        if frozen and frozenCFrame then
+                            cam.CFrame = frozenCFrame
+                        end
+                    end)
+
+                    game:GetService("UserInputService").TouchStarted:Connect(function(inp, proc)
+                        if frozen and not proc then
+                            frozenCFrame = frozenCFrame
+                        end
+                    end)
+                end
             end
 
             local function isOverUI(x, y)
