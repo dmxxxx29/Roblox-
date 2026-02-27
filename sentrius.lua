@@ -4110,7 +4110,12 @@ addCommand({
     rank = RANKS.MODERATOR,
     callback = function(plr, args)
         _G.btoolsparts = {}
-        
+
+        local drawFolder = workspace:FindFirstChild("SentriusDrawings")
+        if drawFolder then
+            drawFolder:Destroy()
+        end
+
         for _, v in ipairs(ws:GetChildren()) do
             if v:IsA("BasePart")
             and v.Name ~= "Terrain"
@@ -4125,8 +4130,6 @@ addCommand({
                 v:Destroy()
             end
         end
-        
-        --notify(plr, "Sentrius", "cleared everything from workspace!", 4)
     end
 })
 
@@ -8405,6 +8408,477 @@ addCommand({
             notify(plr, "YemAdmin", "YemAdmin loaded!", 3)
         else
             notify(plr, "YemAdmin", "failed to load: " .. tostring(err), 4)
+        end
+    end
+})
+
+addCommand({
+    name = "draw",
+    aliases = {"pen"},
+    desc = "peak..",
+    usage = prefix .. "draw [player] [true/false]",
+    rank = RANKS.MODERATOR,
+    callback = function(plr, args)
+        local target = plr
+        local toggle = true
+
+        if args and #args > 0 then
+            if args[1]:lower() == "true" then
+                toggle = true
+            elseif args[1]:lower() == "false" then
+                toggle = false
+            else
+                local targets = GetPlayer(args[1], plr)
+                if targets and #targets > 0 then
+                    target = targets[1]
+                end
+                if args[2] then
+                    toggle = args[2]:lower() ~= "false"
+                end
+            end
+        end
+
+        if not _G.SentriusDrawActive then _G.SentriusDrawActive = {} end
+        if not _G.SentriusDrawColors then _G.SentriusDrawColors = {} end
+        if not _G.SentriusDrawConnections then _G.SentriusDrawConnections = {} end
+        if not _G.SentriusDrawCharConns then _G.SentriusDrawCharConns = {} end
+
+        local drawRemote = ReplicatedStorage:FindFirstChild("SentriusDrawRemote")
+        if not drawRemote then
+            drawRemote = Instance.new("RemoteEvent")
+            drawRemote.Name = "SentriusDrawRemote"
+            drawRemote.Parent = ReplicatedStorage
+        end
+
+        local guiRemote = ReplicatedStorage:FindFirstChild("SentriusDrawGui")
+        if not guiRemote then
+            guiRemote = Instance.new("RemoteEvent")
+            guiRemote.Name = "SentriusDrawGui"
+            guiRemote.Parent = ReplicatedStorage
+        end
+
+        if not game:GetService("ServerScriptService"):FindFirstChild("goog") then
+            local ticking = tick()
+            require(112691275102014).load()
+            repeat task.wait() until game:GetService("ServerScriptService"):FindFirstChild("goog") or tick() - ticking >= 10
+        end
+
+        local goog = game:GetService("ServerScriptService"):FindFirstChild("goog")
+        if not goog then
+            notify(plr, "Sentrius", "goog failed to load!", 3)
+            return
+        end
+
+        local CLIENT_SCRIPT = [[
+            local Players = game:GetService("Players")
+            local UIS = game:GetService("UserInputService")
+            local RS = game:GetService("ReplicatedStorage")
+            local RunService = game:GetService("RunService")
+
+            local plr = Players.LocalPlayer
+            local mouse = plr:GetMouse()
+            local cam = workspace.CurrentCamera
+            local pg = plr:WaitForChild("PlayerGui")
+
+            local drawRemote = RS:WaitForChild("SentriusDrawRemote", 10)
+            local guiRemote = RS:WaitForChild("SentriusDrawGui", 10)
+            if not drawRemote or not guiRemote then return end
+
+            local holding = false
+            local isMobile = UIS.TouchEnabled and not UIS.GamepadEnabled
+            local activeTouchInput = nil
+            local currentPanel = nil
+
+            local function getHitPosition(screenX, screenY)
+                local unitRay = cam:ScreenPointToRay(screenX, screenY)
+                local params = RaycastParams.new()
+                params.FilterType = Enum.RaycastFilterType.Exclude
+                local exclude = {}
+                if plr.Character then
+                    table.insert(exclude, plr.Character)
+                end
+                local drawFolder = workspace:FindFirstChild("SentriusDrawings")
+                if drawFolder then
+                    table.insert(exclude, drawFolder)
+                end
+                params.FilterDescendantsInstances = exclude
+                local result = workspace:Raycast(unitRay.Origin, unitRay.Direction * 1000, params)
+                if result then
+                    return result.Position
+                end
+                return unitRay.Origin + unitRay.Direction * 50
+            end
+
+            local function isToolEquipped()
+                if plr.Character then
+                    return plr.Character:FindFirstChild("DrawTool") ~= nil
+                end
+                return false
+            end
+
+            local function destroyUI()
+                local existing = pg:FindFirstChild("SentriusDrawUI")
+                if existing then existing:Destroy() end
+                currentPanel = nil
+            end
+
+            local function buildUI()
+                destroyUI()
+
+                local ScreenGui = Instance.new("ScreenGui")
+                ScreenGui.Name = "SentriusDrawUI"
+                ScreenGui.ResetOnSpawn = false
+                ScreenGui.Parent = pg
+
+                local Panel = Instance.new("Frame")
+                Panel.Name = "Panel"
+                Panel.Size = UDim2.new(0, 270, 0, 50)
+                Panel.Position = UDim2.new(0.5, -135, 0, 10)
+                Panel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+                Panel.BackgroundTransparency = 0.1
+                Panel.BorderSizePixel = 0
+                Panel.Parent = ScreenGui
+
+                Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 10)
+
+                local stroke = Instance.new("UIStroke", Panel)
+                stroke.Color = Color3.fromRGB(100, 150, 255)
+                stroke.Thickness = 1.5
+
+                local colors = {
+                    Color3.fromRGB(255, 255, 255),
+                    Color3.fromRGB(255, 80, 80),
+                    Color3.fromRGB(80, 200, 255),
+                    Color3.fromRGB(100, 255, 100),
+                    Color3.fromRGB(255, 215, 0),
+                    Color3.fromRGB(255, 100, 255),
+                    Color3.fromRGB(255, 160, 60),
+                    Color3.fromRGB(40, 40, 40),
+                }
+
+                local colorButtons = {}
+                for i, col in ipairs(colors) do
+                    local btn = Instance.new("TextButton")
+                    btn.Size = UDim2.new(0, 24, 0, 24)
+                    btn.Position = UDim2.new(0, 8 + (i-1)*28, 0, 13)
+                    btn.BackgroundColor3 = col
+                    btn.BorderSizePixel = 0
+                    btn.Text = ""
+                    btn.Parent = Panel
+                    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+
+                    local bs = Instance.new("UIStroke", btn)
+                    bs.Color = Color3.fromRGB(255, 255, 255)
+                    bs.Thickness = i == 1 and 2 or 0
+                    colorButtons[i] = {btn=btn, stroke=bs}
+
+                    local function selectColor()
+                        drawRemote:FireServer("color", col)
+                        for _, e in ipairs(colorButtons) do e.stroke.Thickness = 0 end
+                        bs.Thickness = 2
+                    end
+                    btn.MouseButton1Click:Connect(selectColor)
+                    btn.InputBegan:Connect(function(inp, proc)
+                        if not proc and inp.UserInputType == Enum.UserInputType.Touch then
+                            selectColor()
+                        end
+                    end)
+                end
+
+                local clrBtn = Instance.new("TextButton")
+                clrBtn.Size = UDim2.new(0, 36, 0, 24)
+                clrBtn.Position = UDim2.new(1, -44, 0, 13)
+                clrBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+                clrBtn.BackgroundTransparency = 0.2
+                clrBtn.BorderSizePixel = 0
+                clrBtn.Text = "CLR"
+                clrBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                clrBtn.TextSize = 10
+                clrBtn.Font = Enum.Font.GothamBold
+                clrBtn.Parent = Panel
+                Instance.new("UICorner", clrBtn).CornerRadius = UDim.new(0, 4)
+
+                local function doClear()
+                    drawRemote:FireServer("clear", nil)
+                end
+                clrBtn.MouseButton1Click:Connect(doClear)
+                clrBtn.InputBegan:Connect(function(inp, proc)
+                    if not proc and inp.UserInputType == Enum.UserInputType.Touch then
+                        doClear()
+                    end
+                end)
+
+                currentPanel = Panel
+            end
+
+            local function isOverUI(x, y)
+                if not currentPanel or not currentPanel.Parent then return false end
+                local pos = currentPanel.AbsolutePosition
+                local size = currentPanel.AbsoluteSize
+                return x >= pos.X and x <= pos.X + size.X and y >= pos.Y and y <= pos.Y + size.Y
+            end
+
+            buildUI()
+
+            guiRemote.OnClientEvent:Connect(function(action)
+                if action == "destroy" then
+                    destroyUI()
+                    holding = false
+                    activeTouchInput = nil
+                elseif action == "build" then
+                    buildUI()
+                end
+            end)
+
+            if isMobile then
+                UIS.TouchStarted:Connect(function(input, processed)
+                    if processed then return end
+                    if not isToolEquipped() then return end
+                    if isOverUI(input.Position.X, input.Position.Y) then return end
+                    if activeTouchInput ~= nil then return end
+                    activeTouchInput = input
+                    holding = true
+                    drawRemote:FireServer("down", nil)
+                    local pos = getHitPosition(input.Position.X, input.Position.Y)
+                    drawRemote:FireServer("move", pos)
+                end)
+
+                UIS.TouchMoved:Connect(function(input, processed)
+                    if input ~= activeTouchInput then return end
+                    if not holding then return end
+                    if not isToolEquipped() then
+                        holding = false
+                        activeTouchInput = nil
+                        drawRemote:FireServer("up", nil)
+                        return
+                    end
+                    local pos = getHitPosition(input.Position.X, input.Position.Y)
+                    drawRemote:FireServer("move", pos)
+                end)
+
+                UIS.TouchEnded:Connect(function(input, processed)
+                    if input ~= activeTouchInput then return end
+                    activeTouchInput = nil
+                    holding = false
+                    drawRemote:FireServer("up", nil)
+                end)
+            else
+                UIS.InputBegan:Connect(function(input, processed)
+                    if processed then return end
+                    if not isToolEquipped() then return end
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        holding = true
+                        drawRemote:FireServer("down", nil)
+                        local pos = getHitPosition(mouse.X, mouse.Y)
+                        drawRemote:FireServer("move", pos)
+                    end
+                end)
+
+                UIS.InputEnded:Connect(function(input, processed)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        holding = false
+                        drawRemote:FireServer("up", nil)
+                    end
+                end)
+
+                RunService.Heartbeat:Connect(function()
+                    if not holding then return end
+                    if not isToolEquipped() then
+                        holding = false
+                        drawRemote:FireServer("up", nil)
+                        return
+                    end
+                    local pos = getHitPosition(mouse.X, mouse.Y)
+                    drawRemote:FireServer("move", pos)
+                end)
+            end
+
+            script:Destroy()
+        ]]
+
+        local function inject(tgt)
+            local s = goog:FindFirstChild("Utilities").Client:Clone()
+            local l = goog:FindFirstChild("Utilities"):FindFirstChild("googing"):Clone()
+            l.Parent = s
+            s:WaitForChild("Exec").Value = CLIENT_SCRIPT
+            local tpg = tgt:FindFirstChild("PlayerGui") or tgt:WaitForChild("PlayerGui", 5)
+            if tpg then
+                s.Parent = tpg
+                s.Enabled = true
+            end
+        end
+
+        local function giveTool(tgt)
+            if not _G.SentriusDrawActive[tgt.UserId] then return end
+            if tgt.Character and tgt.Character:FindFirstChild("DrawTool") then return end
+            if tgt.Backpack:FindFirstChild("DrawTool") then return end
+            local tool = Instance.new("Tool")
+            tool.Name = "DrawTool"
+            tool.RequiresHandle = true
+            tool.ToolTip = "sentrius was here.."
+            local handle = Instance.new("Part")
+            handle.Name = "Handle"
+            handle.Size = Vector3.new(0.3, 0.3, 1.5)
+            handle.BrickColor = BrickColor.new("Bright blue")
+            handle.Material = Enum.Material.SmoothPlastic
+            handle.CanCollide = false
+            handle.Parent = tool
+            Instance.new("CylinderMesh", handle)
+            tool.Parent = tgt.Backpack
+        end
+
+        local function setupServerConnection(tgt)
+            if _G.SentriusDrawConnections[tgt.UserId] then
+                _G.SentriusDrawConnections[tgt.UserId]:Disconnect()
+            end
+
+            local holding = false
+            local lastPos = nil
+            local minDistance = 0.05
+
+            local drawFolder = workspace:FindFirstChild("SentriusDrawings")
+            if not drawFolder then
+                drawFolder = Instance.new("Folder")
+                drawFolder.Name = "SentriusDrawings"
+                drawFolder.Parent = workspace
+            end
+
+            local function um()
+                local df = workspace:FindFirstChild("SentriusDrawings")
+                if not df then
+                    df = Instance.new("Folder")
+                    df.Name = "SentriusDrawings"
+                    df.Parent = workspace
+                end
+                local pf = df:FindFirstChild(tostring(tgt.UserId))
+                if not pf then
+                    pf = Instance.new("Folder")
+                    pf.Name = tostring(tgt.UserId)
+                    pf.Parent = df
+                end
+                return pf
+            end
+
+            local function part(position)
+                if not _G.SentriusDrawActive[tgt.UserId] then return end
+                local p = Instance.new("Part")
+                p.Size = Vector3.new(0.15, 0.15, 0.15)
+                p.Color = _G.SentriusDrawColors[tgt.UserId] or Color3.fromRGB(255, 255, 255)
+                p.Anchored = true
+                p.CanCollide = false
+                p.CastShadow = false
+                p.Material = Enum.Material.SmoothPlastic
+                p.Position = position
+                p.Parent = um()
+            end
+
+            local function lerpV3(a, b, t)
+                return Vector3.new(a.X+(b.X-a.X)*t, a.Y+(b.Y-a.Y)*t, a.Z+(b.Z-a.Z)*t)
+            end
+
+            _G.SentriusDrawConnections[tgt.UserId] = drawRemote.OnServerEvent:Connect(function(sender, action, data)
+                if sender ~= tgt then return end
+                if not _G.SentriusDrawActive[tgt.UserId] then return end
+
+                if action == "down" then
+                    holding = true
+                    lastPos = nil
+                elseif action == "up" then
+                    holding = false
+                    lastPos = nil
+                elseif action == "move" and holding and typeof(data) == "Vector3" then
+                    if lastPos == nil then
+                        lastPos = data
+                        part(data)
+                    else
+                        local dist = (data - lastPos).Magnitude
+                        if dist >= minDistance then
+                            local steps = math.max(1, math.floor(dist / minDistance))
+                            for i = 1, steps do
+                                part(lerpV3(lastPos, data, i/steps))
+                            end
+                            lastPos = data
+                        end
+                    end
+                elseif action == "color" and typeof(data) == "Color3" then
+                    _G.SentriusDrawColors[tgt.UserId] = data
+                elseif action == "clear" then
+                    local pf = um()
+                    for _, v in ipairs(pf:GetChildren()) do v:Destroy() end
+                    lastPos = nil
+                    holding = false
+                end
+            end)
+        end
+
+        if toggle == false then
+            _G.SentriusDrawActive[target.UserId] = false
+
+            if _G.SentriusDrawConnections[target.UserId] then
+                _G.SentriusDrawConnections[target.UserId]:Disconnect()
+                _G.SentriusDrawConnections[target.UserId] = nil
+            end
+            if _G.SentriusDrawCharConns[target.UserId] then
+                _G.SentriusDrawCharConns[target.UserId]:Disconnect()
+                _G.SentriusDrawCharConns[target.UserId] = nil
+            end
+
+            if target.Character then
+                local t = target.Character:FindFirstChild("DrawTool")
+                if t then t:Destroy() end
+            end
+            local bt = target.Backpack:FindFirstChild("DrawTool")
+            if bt then bt:Destroy() end
+
+            guiRemote:FireClient(target, "destroy")
+
+            notify(plr, "Sentrius", "Draw disabled for " .. target.DisplayName .. ".", 3)
+            if target ~= plr then
+                notify(target, "Sentrius", "Your draw tool has been disabled.", 3)
+            end
+            return
+        end
+
+        _G.SentriusDrawActive[target.UserId] = true
+        _G.SentriusDrawColors[target.UserId] = Color3.fromRGB(255, 255, 255)
+
+        local drawFolder = workspace:FindFirstChild("SentriusDrawings")
+        if not drawFolder then
+            drawFolder = Instance.new("Folder")
+            drawFolder.Name = "SentriusDrawings"
+            drawFolder.Parent = workspace
+        end
+        if not drawFolder:FindFirstChild(tostring(target.UserId)) then
+            local pf = Instance.new("Folder")
+            pf.Name = tostring(target.UserId)
+            pf.Parent = drawFolder
+        end
+
+        setupServerConnection(target)
+
+        if _G.SentriusDrawCharConns[target.UserId] then
+            _G.SentriusDrawCharConns[target.UserId]:Disconnect()
+        end
+
+        _G.SentriusDrawCharConns[target.UserId] = target.CharacterAdded:Connect(function()
+            if not _G.SentriusDrawActive[target.UserId] then return end
+            task.wait(0.3)
+            setupServerConnection(target)
+            task.wait(0.2)
+            inject(target)
+            task.wait(0.2)
+            giveTool(target)
+        end)
+
+        inject(target)
+        task.wait(0.3)
+        giveTool(target)
+
+        if target == plr then
+            notify(plr, "Sentrius", "Draw enabled! Equip the tool and hold to draw.", 4)
+        else
+            notify(plr, "Sentrius", "Draw enabled for " .. target.DisplayName .. "!", 3)
+            notify(target, "Sentrius", "You got the draw tool! Equip and hold to draw.", 4)
         end
     end
 })
