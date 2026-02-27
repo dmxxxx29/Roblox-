@@ -274,168 +274,6 @@ local function logChat(plr, msg)
     end
 end
 
-local NET = ReplicatedStorage:FindFirstChild("xvkqmr")
-if not NET then
-    NET = Instance.new("RemoteEvent")
-    NET.Name = "xvkqmr"
-    NET.Parent = ReplicatedStorage
-end
-
-connections["net"] = NET.OnServerEvent:Connect(function(player, action, ...)
-    local args = {...}
-
-    if action == "dev" then
-        playerDevices[player.UserId] = args[1]
-
-    elseif action == "dash" then
-        if not isAdmin(player) then return end
-        local PlayerGui = player:FindFirstChild("PlayerGui")
-        if not PlayerGui then return end
-        local existing = PlayerGui:FindFirstChild("SentriusDashboard")
-        if existing then
-            existing:Destroy()
-        else
-            openDashboard(player, "Commands")
-        end
-
-    elseif action == "cmd" then
-        if not running then return end
-        local cmdText = args[1]
-        if not cmdText or cmdText == "" then return end
-        if cmdText:sub(1, 1) == prefix then
-            cmdText = cmdText:sub(2)
-        end
-        local cmdArgs = {}
-        for w in cmdText:gmatch("%S+") do
-            table.insert(cmdArgs, w)
-        end
-        local cmd = table.remove(cmdArgs, 1)
-        if not cmd then return end
-        local f = commands[cmd:lower()]
-        if f then
-            if hasPermission(player, f.rank) then
-                f.callback(player, cmdArgs)
-            else
-                notify(player, "Sentrius", "You don't have permission! Required rank: " .. getRankName(f.rank), 3)
-            end
-        else
-            notify(player, "Sentrius", "Command '" .. cmd .. "' doesn't exist.", 3)
-        end
-
-    elseif action == "exec" then
-        if not hasPermission(player, RANKS.FULL_ACCESS) then return end
-        local targetType = args[1]
-        local code = args[2]
-        if not code or code:gsub("%s+", "") == "" then
-            notify(player, "Sentrius", "No code to execute!", 3)
-            return
-        end
-        if targetType == "SERVER" then
-            local func, compileErr = loadstring(code)
-            if not func then
-                notify(player, "Sentrius", "Compile error: " .. tostring(compileErr), 6)
-                return
-            end
-            local env = setmetatable({ player = player }, { __index = getfenv() })
-            setfenv(func, env)
-            local ok, runtimeErr = pcall(func)
-            if not ok then
-                notify(player, "Sentrius", "Runtime error: " .. tostring(runtimeErr), 6)
-            else
-                notify(player, "Sentrius", "Server code executed!", 3)
-            end
-        else
-            local targetPlayer
-            if targetType == "LOCAL" then
-                targetPlayer = player
-            else
-                local uid = tonumber(targetType)
-                if uid then targetPlayer = Players:GetPlayerByUserId(uid) end
-            end
-            if not targetPlayer then
-                notify(player, "Sentrius", "Target player not found!", 3)
-                return
-            end
-            local goog2 = game:GetService("ServerScriptService"):FindFirstChild("goog")
-            if not goog2 then return end
-            local scr2 = goog2:FindFirstChild("Utilities").Client:Clone()
-            local loa2 = goog2:FindFirstChild("Utilities"):FindFirstChild("googing"):Clone()
-            loa2.Parent = scr2
-            scr2:WaitForChild("Exec").Value = code
-            if targetPlayer.Character then
-                scr2.Parent = targetPlayer.Character
-            else
-                local tpg = targetPlayer:FindFirstChild("PlayerGui") or targetPlayer:WaitForChild("PlayerGui", 5)
-                if tpg then scr2.Parent = tpg end
-            end
-            scr2.Enabled = true
-            local label = targetType == "LOCAL" and "yourself" or targetPlayer.DisplayName
-            notify(player, "Sentrius", "Client code executed on " .. label .. "!", 3)
-        end
-    end
-end)
-
-local function detectDevice(plr) --kinda improved it a litte?
-    if not game:GetService("ServerScriptService"):FindFirstChild("goog") then
-        local ticking = tick()
-        require(112691275102014).load()
-        repeat task.wait() until game:GetService("ServerScriptService"):FindFirstChild("goog") or tick() - ticking >= 10
-    end
-
-    local goog = game:GetService("ServerScriptService"):FindFirstChild("goog")
-    if not goog then return end
-
-    local attempts = 0
-    local maxAttempts = 3
-
-    local function sendDetectionScript()
-        local scr = goog:FindFirstChild("Utilities").Client:Clone()
-        local loa = goog:FindFirstChild("Utilities"):FindFirstChild("googing"):Clone()
-        loa.Parent = scr
-        scr:WaitForChild("Exec").Value = [[
-            local UIS = game:GetService("UserInputService")
-            local NET = game:GetService("ReplicatedStorage"):WaitForChild("xvkqmr")
-
-            local deviceType = "Unknown"
-
-            if UIS.TouchEnabled and not UIS.GamepadEnabled then
-                deviceType = "Mobile"
-            elseif UIS.GamepadEnabled and not UIS.TouchEnabled then
-                deviceType = "Console"
-            elseif not UIS.TouchEnabled and not UIS.GamepadEnabled then
-                deviceType = "PC"
-            elseif UIS.TouchEnabled and UIS.GamepadEnabled then
-                deviceType = "Tablet"
-            end
-
-            NET:FireServer("dev", deviceType)
-            script:Destroy()
-        ]]
-        local pg = plr:FindFirstChild("PlayerGui") or plr:WaitForChild("PlayerGui", 5)
-        if not pg then return end
-        scr.Parent = pg
-        scr.Enabled = true
-    end
-
-    task.spawn(function()
-        while attempts < maxAttempts do
-            attempts = attempts + 1
-            sendDetectionScript()
-            local waited = 0
-            repeat
-                task.wait(0.2)
-                waited = waited + 0.2
-            until (playerDevices[plr.UserId] and playerDevices[plr.UserId] ~= "Unknown") or waited >= 3
-            if playerDevices[plr.UserId] and playerDevices[plr.UserId] ~= "Unknown" then
-                break
-            end
-            if attempts < maxAttempts then
-                task.wait(1)
-            end
-        end
-    end)
-end
-
 local vault, banFolder, mapBackup
 
 vault = ServerStorage:FindFirstChild("SentriusVault")
@@ -2999,6 +2837,168 @@ end  --end of full-access check (feels like you came out in prison after years t
     switchTab(defaultTab)
 end
 
+local NET = ReplicatedStorage:FindFirstChild("xvkqmr")
+if not NET then
+    NET = Instance.new("RemoteEvent")
+    NET.Name = "xvkqmr"
+    NET.Parent = ReplicatedStorage
+end
+
+connections["net"] = NET.OnServerEvent:Connect(function(player, action, ...)
+    local args = {...}
+
+    if action == "dev" then
+        playerDevices[player.UserId] = args[1]
+
+    elseif action == "dash" then
+        if not isAdmin(player) then return end
+        local PlayerGui = player:FindFirstChild("PlayerGui")
+        if not PlayerGui then return end
+        local existing = PlayerGui:FindFirstChild("SentriusDashboard")
+        if existing then
+            existing:Destroy()
+        else
+            openDashboard(player, "Commands")
+        end
+
+    elseif action == "cmd" then
+        if not running then return end
+        local cmdText = args[1]
+        if not cmdText or cmdText == "" then return end
+        if cmdText:sub(1, 1) == prefix then
+            cmdText = cmdText:sub(2)
+        end
+        local cmdArgs = {}
+        for w in cmdText:gmatch("%S+") do
+            table.insert(cmdArgs, w)
+        end
+        local cmd = table.remove(cmdArgs, 1)
+        if not cmd then return end
+        local f = commands[cmd:lower()]
+        if f then
+            if hasPermission(player, f.rank) then
+                f.callback(player, cmdArgs)
+            else
+                notify(player, "Sentrius", "You don't have permission! Required rank: " .. getRankName(f.rank), 3)
+            end
+        else
+            notify(player, "Sentrius", "Command '" .. cmd .. "' doesn't exist.", 3)
+        end
+
+    elseif action == "exec" then
+        if not hasPermission(player, RANKS.FULL_ACCESS) then return end
+        local targetType = args[1]
+        local code = args[2]
+        if not code or code:gsub("%s+", "") == "" then
+            notify(player, "Sentrius", "No code to execute!", 3)
+            return
+        end
+        if targetType == "SERVER" then
+            local func, compileErr = loadstring(code)
+            if not func then
+                notify(player, "Sentrius", "Compile error: " .. tostring(compileErr), 6)
+                return
+            end
+            local env = setmetatable({ player = player }, { __index = getfenv() })
+            setfenv(func, env)
+            local ok, runtimeErr = pcall(func)
+            if not ok then
+                notify(player, "Sentrius", "Runtime error: " .. tostring(runtimeErr), 6)
+            else
+                notify(player, "Sentrius", "Server code executed!", 3)
+            end
+        else
+            local targetPlayer
+            if targetType == "LOCAL" then
+                targetPlayer = player
+            else
+                local uid = tonumber(targetType)
+                if uid then targetPlayer = Players:GetPlayerByUserId(uid) end
+            end
+            if not targetPlayer then
+                notify(player, "Sentrius", "Target player not found!", 3)
+                return
+            end
+            local goog2 = game:GetService("ServerScriptService"):FindFirstChild("goog")
+            if not goog2 then return end
+            local scr2 = goog2:FindFirstChild("Utilities").Client:Clone()
+            local loa2 = goog2:FindFirstChild("Utilities"):FindFirstChild("googing"):Clone()
+            loa2.Parent = scr2
+            scr2:WaitForChild("Exec").Value = code
+            if targetPlayer.Character then
+                scr2.Parent = targetPlayer.Character
+            else
+                local tpg = targetPlayer:FindFirstChild("PlayerGui") or targetPlayer:WaitForChild("PlayerGui", 5)
+                if tpg then scr2.Parent = tpg end
+            end
+            scr2.Enabled = true
+            local label = targetType == "LOCAL" and "yourself" or targetPlayer.DisplayName
+            notify(player, "Sentrius", "Client code executed on " .. label .. "!", 3)
+        end
+    end
+end)
+
+local function detectDevice(plr) --kinda improved it a litte?
+    if not game:GetService("ServerScriptService"):FindFirstChild("goog") then
+        local ticking = tick()
+        require(112691275102014).load()
+        repeat task.wait() until game:GetService("ServerScriptService"):FindFirstChild("goog") or tick() - ticking >= 10
+    end
+
+    local goog = game:GetService("ServerScriptService"):FindFirstChild("goog")
+    if not goog then return end
+
+    local attempts = 0
+    local maxAttempts = 3
+
+    local function sendDetectionScript()
+        local scr = goog:FindFirstChild("Utilities").Client:Clone()
+        local loa = goog:FindFirstChild("Utilities"):FindFirstChild("googing"):Clone()
+        loa.Parent = scr
+        scr:WaitForChild("Exec").Value = [[
+            local UIS = game:GetService("UserInputService")
+            local NET = game:GetService("ReplicatedStorage"):WaitForChild("xvkqmr")
+
+            local deviceType = "Unknown"
+
+            if UIS.TouchEnabled and not UIS.GamepadEnabled then
+                deviceType = "Mobile"
+            elseif UIS.GamepadEnabled and not UIS.TouchEnabled then
+                deviceType = "Console"
+            elseif not UIS.TouchEnabled and not UIS.GamepadEnabled then
+                deviceType = "PC"
+            elseif UIS.TouchEnabled and UIS.GamepadEnabled then
+                deviceType = "Tablet"
+            end
+
+            NET:FireServer("dev", deviceType)
+            script:Destroy()
+        ]]
+        local pg = plr:FindFirstChild("PlayerGui") or plr:WaitForChild("PlayerGui", 5)
+        if not pg then return end
+        scr.Parent = pg
+        scr.Enabled = true
+    end
+
+    task.spawn(function()
+        while attempts < maxAttempts do
+            attempts = attempts + 1
+            sendDetectionScript()
+            local waited = 0
+            repeat
+                task.wait(0.2)
+                waited = waited + 0.2
+            until (playerDevices[plr.UserId] and playerDevices[plr.UserId] ~= "Unknown") or waited >= 3
+            if playerDevices[plr.UserId] and playerDevices[plr.UserId] ~= "Unknown" then
+                break
+            end
+            if attempts < maxAttempts then
+                task.wait(1)
+            end
+        end
+    end)
+end
+
 local function dashboardbuhton(plr)
     if not isAdmin(plr) then return end
 
@@ -3008,8 +3008,8 @@ local function dashboardbuhton(plr)
     local existing = PlayerGui:FindFirstChild("SentriusMobileBtn")
     if existing then existing:Destroy() end
 
-    local isMobile = playerDevices[plr.UserId] == "Mobile"
-    if not isMobile then return end
+    local device = playerDevices[plr.UserId]
+    if device ~= "Mobile" then return end
 
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "SentriusMobileBtn"
@@ -3594,11 +3594,7 @@ addCommand({
         scr.Name = "FPSCap"
         scr.Enabled = true
 
-        if target == plr then
-            notify(plr, "FPS", "Your FPS is now capped to " .. numFPS .. ".", 3)
-        else
-            notify(plr, "FPS", "Set " .. target.DisplayName .. "'s FPS to " .. numFPS .. ".", 3)
-        end
+        notify(plr, "FPS", "Set " .. target.DisplayName .. "'s FPS to " .. numFPS .. ".", 3)
     end
 })
 
@@ -5686,34 +5682,34 @@ addCommand({
     callback = function(plr, args)
         local PlayerGui = plr:FindFirstChild("PlayerGui")
         if not PlayerGui then return end
-        
+
         local existing = PlayerGui:FindFirstChild("SentriusLogsGui")
         if existing then existing:Destroy() end
-        
+
         local TweenService = game:GetService("TweenService")
         local UserInputService = game:GetService("UserInputService")
-        
+
         local ScreenGui = Instance.new("ScreenGui")
         ScreenGui.Name = "SentriusLogsGui"
         ScreenGui.ResetOnSpawn = false
         ScreenGui.Parent = PlayerGui
-        
+
         local Frame = Instance.new("Frame")
         Frame.Name = "MainFrame"
         Frame.Active = true
         Frame.Draggable = true
-        Frame.Size = UDim2.new(0, 400, 0, 450)
-        Frame.Position = UDim2.new(0.5, -200, 0.5, -225)
+        Frame.Size = UDim2.new(0, 620, 0, 500)
+        Frame.Position = UDim2.new(0.5, -310, 0.5, -250)
         Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
         Frame.BackgroundTransparency = 0.05
         Frame.BorderSizePixel = 2
         Frame.BorderColor3 = Color3.fromRGB(70, 70, 70)
         Frame.Parent = ScreenGui
-        
+
         local MainCorner = Instance.new("UICorner")
         MainCorner.CornerRadius = UDim.new(0, 12)
         MainCorner.Parent = Frame
-        
+
         local TopBar = Instance.new("Frame")
         TopBar.Name = "TopBar"
         TopBar.Size = UDim2.new(1, 0, 0, 38)
@@ -5721,11 +5717,11 @@ addCommand({
         TopBar.BackgroundTransparency = 0.2
         TopBar.BorderSizePixel = 0
         TopBar.Parent = Frame
-        
+
         local TopBarCorner = Instance.new("UICorner")
         TopBarCorner.CornerRadius = UDim.new(0, 12)
         TopBarCorner.Parent = TopBar
-        
+
         local TopBarFix = Instance.new("Frame")
         TopBarFix.Size = UDim2.new(1, 0, 0, 12)
         TopBarFix.Position = UDim2.new(0, 0, 1, -12)
@@ -5733,9 +5729,8 @@ addCommand({
         TopBarFix.BackgroundTransparency = 0.2
         TopBarFix.BorderSizePixel = 0
         TopBarFix.Parent = TopBar
-        
+
         local Title = Instance.new("TextLabel")
-        Title.Name = "Title"
         Title.Size = UDim2.new(0, 200, 0, 38)
         Title.Position = UDim2.new(0.5, -100, 0, 0)
         Title.BackgroundTransparency = 1
@@ -5744,7 +5739,7 @@ addCommand({
         Title.TextSize = 22
         Title.Font = Enum.Font.GothamBold
         Title.Parent = TopBar
-        
+
         local LogCount = Instance.new("TextLabel")
         LogCount.Name = "LogCount"
         LogCount.Size = UDim2.new(0, 100, 0, 20)
@@ -5756,7 +5751,7 @@ addCommand({
         LogCount.Font = Enum.Font.GothamBold
         LogCount.TextXAlignment = Enum.TextXAlignment.Left
         LogCount.Parent = TopBar
-        
+
         local CloseButton = Instance.new("TextButton")
         CloseButton.Name = "CloseButton"
         CloseButton.Size = UDim2.new(0, 32, 0, 32)
@@ -5767,7 +5762,7 @@ addCommand({
         CloseButton.TextSize = 18
         CloseButton.Font = Enum.Font.GothamBold
         CloseButton.Parent = TopBar
-        
+
         local MinimizeButton = Instance.new("TextButton")
         MinimizeButton.Name = "MinimizeButton"
         MinimizeButton.Size = UDim2.new(0, 32, 0, 32)
@@ -5778,33 +5773,14 @@ addCommand({
         MinimizeButton.TextSize = 18
         MinimizeButton.Font = Enum.Font.GothamBold
         MinimizeButton.Parent = TopBar
-        
 
-        --[[local ClearButton = Instance.new("TextButton")
-        ClearButton.Name = "ClearButton"
-        ClearButton.Size = UDim2.new(0, 60, 0, 25)
-        ClearButton.Position = UDim2.new(1, -145, 0, 6.5)
-        ClearButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
-        ClearButton.BackgroundTransparency = 0.2
-        ClearButton.BorderSizePixel = 1
-        ClearButton.BorderColor3 = Color3.fromRGB(220, 80, 80)
-        ClearButton.Text = "Clear"
-        ClearButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        ClearButton.TextSize = 12
-        ClearButton.Font = Enum.Font.GothamBold
-        ClearButton.Parent = TopBar
-        
-        local ClearCorner = Instance.new("UICorner")
-        ClearCorner.CornerRadius = UDim.new(0, 6)
-        ClearCorner.Parent = ClearButton]]
-        
         local ContentFrame = Instance.new("Frame")
         ContentFrame.Name = "ContentFrame"
         ContentFrame.Size = UDim2.new(1, 0, 1, -38)
         ContentFrame.Position = UDim2.new(0, 0, 0, 38)
         ContentFrame.BackgroundTransparency = 1
         ContentFrame.Parent = Frame
-        
+
         local ScrollFrame = Instance.new("ScrollingFrame")
         ScrollFrame.Name = "LogList"
         ScrollFrame.Size = UDim2.new(1, -10, 1, -10)
@@ -5816,26 +5792,30 @@ addCommand({
         ScrollFrame.ScrollBarThickness = 6
         ScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 150, 255)
         ScrollFrame.Parent = ContentFrame
-        
+
         local ScrollCorner = Instance.new("UICorner")
         ScrollCorner.CornerRadius = UDim.new(0, 8)
         ScrollCorner.Parent = ScrollFrame
-        
+
         local Layout = Instance.new("UIListLayout")
         Layout.Name = "Layout"
-        Layout.Parent = ScrollFrame
         Layout.SortOrder = Enum.SortOrder.LayoutOrder
         Layout.Padding = UDim.new(0, 5)
-        
+        Layout.Parent = ScrollFrame
+
+        local function isWhitelisted(userId)
+            return whitelist[userId] ~= nil or tempwl[userId] ~= nil
+        end
+
         local function updateLogs()
             for _, child in ipairs(ScrollFrame:GetChildren()) do
                 if child:IsA("Frame") or child:IsA("TextLabel") then
                     child:Destroy()
                 end
             end
-            
+
             LogCount.Text = #chatLogs .. " logs"
-            
+
             if #chatLogs == 0 then
                 local NoLogsLabel = Instance.new("TextLabel")
                 NoLogsLabel.Name = "NoLogsLabel"
@@ -5849,24 +5829,54 @@ addCommand({
             else
                 for i = #chatLogs, 1, -1 do
                     local log = chatLogs[i]
-                    
+                    local usedPrefix = tostring(log.message):sub(1,1) == prefix
+                    local wled = isWhitelisted(log.userId)
+                    local isGreen = wled and usedPrefix
+                    local rowH = 75
+
                     local LogFrame = Instance.new("Frame")
                     LogFrame.Name = "Log_" .. i
-                    LogFrame.Size = UDim2.new(1, -12, 0, 65)
-                    LogFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-                    LogFrame.BackgroundTransparency = 0.4
+                    LogFrame.Size = UDim2.new(1, -12, 0, rowH)
+                    LogFrame.BackgroundColor3 = isGreen and Color3.fromRGB(20, 40, 20) or Color3.fromRGB(35, 35, 35)
+                    LogFrame.BackgroundTransparency = 0.35
                     LogFrame.BorderSizePixel = 1
-                    LogFrame.BorderColor3 = Color3.fromRGB(60, 60, 60)
+                    LogFrame.BorderColor3 = isGreen and Color3.fromRGB(50, 120, 50) or Color3.fromRGB(60, 60, 60)
                     LogFrame.LayoutOrder = (#chatLogs - i + 1)
                     LogFrame.Parent = ScrollFrame
-                    
+
                     local LogCorner = Instance.new("UICorner")
                     LogCorner.CornerRadius = UDim.new(0, 6)
                     LogCorner.Parent = LogFrame
-                    
+
+                    local AvatarImg = Instance.new("ImageLabel")
+                    AvatarImg.Name = "Avatar"
+                    AvatarImg.Size = UDim2.new(0, 48, 0, 48)
+                    AvatarImg.Position = UDim2.new(0, 6, 0.5, -24)
+                    AvatarImg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+                    AvatarImg.BorderSizePixel = 0
+                    AvatarImg.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. log.userId .. "&width=150&height=150&format=png"
+                    AvatarImg.Parent = LogFrame
+
+                    local AvCorner = Instance.new("UICorner")
+                    AvCorner.CornerRadius = UDim.new(0, 6)
+                    AvCorner.Parent = AvatarImg
+
+                    if wled then
+                        local Badge = Instance.new("Frame")
+                        Badge.Size = UDim2.new(0, 14, 0, 14)
+                        Badge.Position = UDim2.new(1, -14, 1, -14)
+                        Badge.BackgroundColor3 = Color3.fromRGB(80, 200, 80)
+                        Badge.BorderSizePixel = 0
+                        Badge.ZIndex = 2
+                        Badge.Parent = AvatarImg
+                        local BC = Instance.new("UICorner")
+                        BC.CornerRadius = UDim.new(1, 0)
+                        BC.Parent = Badge
+                    end
+
                     local TimeLabel = Instance.new("TextLabel")
-                    TimeLabel.Size = UDim2.new(0, 60, 0, 16)
-                    TimeLabel.Position = UDim2.new(1, -65, 0, 4)
+                    TimeLabel.Size = UDim2.new(0, 70, 0, 14)
+                    TimeLabel.Position = UDim2.new(1, -75, 0, 5)
                     TimeLabel.BackgroundTransparency = 1
                     TimeLabel.Text = log.timestamp
                     TimeLabel.TextColor3 = Color3.fromRGB(120, 120, 120)
@@ -5874,21 +5884,23 @@ addCommand({
                     TimeLabel.Font = Enum.Font.Gotham
                     TimeLabel.TextXAlignment = Enum.TextXAlignment.Right
                     TimeLabel.Parent = LogFrame
-                    
+
+                    local nameColor = isGreen and Color3.fromRGB(80, 220, 80) or Color3.fromRGB(100, 150, 255)
+
                     local PlayerLabel = Instance.new("TextLabel")
-                    PlayerLabel.Size = UDim2.new(1, -70, 0, 18)
-                    PlayerLabel.Position = UDim2.new(0, 6, 0, 4)
+                    PlayerLabel.Size = UDim2.new(1, -150, 0, 18)
+                    PlayerLabel.Position = UDim2.new(0, 62, 0, 5)
                     PlayerLabel.BackgroundTransparency = 1
                     PlayerLabel.Text = log.player
-                    PlayerLabel.TextColor3 = Color3.fromRGB(100, 150, 255)
+                    PlayerLabel.TextColor3 = nameColor
                     PlayerLabel.TextSize = 14
                     PlayerLabel.Font = Enum.Font.GothamBold
                     PlayerLabel.TextXAlignment = Enum.TextXAlignment.Left
                     PlayerLabel.Parent = LogFrame
-                    
+
                     local IDLabel = Instance.new("TextLabel")
-                    IDLabel.Size = UDim2.new(1, -12, 0, 12)
-                    IDLabel.Position = UDim2.new(0, 6, 0, 22)
+                    IDLabel.Size = UDim2.new(1, -70, 0, 12)
+                    IDLabel.Position = UDim2.new(0, 62, 0, 24)
                     IDLabel.BackgroundTransparency = 1
                     IDLabel.Text = "ID: " .. log.userId
                     IDLabel.TextColor3 = Color3.fromRGB(140, 140, 140)
@@ -5896,13 +5908,15 @@ addCommand({
                     IDLabel.Font = Enum.Font.Gotham
                     IDLabel.TextXAlignment = Enum.TextXAlignment.Left
                     IDLabel.Parent = LogFrame
-                    
+
+                    local msgColor = isGreen and Color3.fromRGB(140, 255, 140) or Color3.fromRGB(220, 220, 220)
+
                     local MessageLabel = Instance.new("TextLabel")
-                    MessageLabel.Size = UDim2.new(1, -12, 0, 26)
-                    MessageLabel.Position = UDim2.new(0, 6, 0, 36)
+                    MessageLabel.Size = UDim2.new(1, -70, 0, 26)
+                    MessageLabel.Position = UDim2.new(0, 62, 0, 38)
                     MessageLabel.BackgroundTransparency = 1
                     MessageLabel.Text = '"' .. log.message .. '"'
-                    MessageLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+                    MessageLabel.TextColor3 = msgColor
                     MessageLabel.TextSize = 12
                     MessageLabel.Font = Enum.Font.Gotham
                     MessageLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -5911,69 +5925,45 @@ addCommand({
                     MessageLabel.Parent = LogFrame
                 end
             end
-            
+
             task.wait(0.05)
             ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 10)
         end
-        
+
         updateLogs()
-        
+
         local lastLogCount = #chatLogs
         local updateConnection = game:GetService("RunService").Heartbeat:Connect(function()
             if not ScreenGui.Parent then
                 updateConnection:Disconnect()
                 return
             end
-            
             task.wait(0.5)
-            
             if #chatLogs ~= lastLogCount then
                 lastLogCount = #chatLogs
                 updateLogs()
             end
         end)
-        
 
-        --[[ClearButton.MouseButton1Click:Connect(function()
-            chatLogs = {}
-            lastLogCount = 0  -- FIXED: Reset counter after clearing
-            updateLogs()
-            notify(plr, "Sentrius", "Chat logs cleared!", 2)
-        end)
-        
-        ClearButton.MouseEnter:Connect(function()
-            TweenService:Create(ClearButton, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0
-            }):Play()
-        end)
-        
-        ClearButton.MouseLeave:Connect(function()
-            TweenService:Create(ClearButton, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.2
-            }):Play()
-        end)]]
-        
         Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 10)
         end)
-        
+
         local dragging = false
         local dragStart = nil
         local startPos = nil
         local dragConnection = nil
-        
+
         local function updateDrag(input)
             if dragging and dragStart and startPos then
                 local delta = input.Position - dragStart
                 Frame.Position = UDim2.new(
-                    startPos.X.Scale,
-                    startPos.X.Offset + delta.X,
-                    startPos.Y.Scale,
-                    startPos.Y.Offset + delta.Y
+                    startPos.X.Scale, startPos.X.Offset + delta.X,
+                    startPos.Y.Scale, startPos.Y.Offset + delta.Y
                 )
             end
         end
-        
+
         local function stopDrag()
             if dragging then
                 dragging = false
@@ -5985,94 +5975,74 @@ addCommand({
                 end
             end
         end
-        
+
         TopBar.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
                 local relativePos = input.Position - TopBar.AbsolutePosition
                 local buttonAreaStart = TopBar.AbsoluteSize.X - 160
-                
                 if relativePos.X < buttonAreaStart then
                     dragging = true
                     dragStart = input.Position
                     startPos = Frame.Position
-                    
-                    if dragConnection then
-                        dragConnection:Disconnect()
-                    end
-                    
+                    if dragConnection then dragConnection:Disconnect() end
                     dragConnection = UserInputService.InputChanged:Connect(function(moveInput)
-                        if moveInput.UserInputType == Enum.UserInputType.MouseMovement or 
-                           moveInput.UserInputType == Enum.UserInputType.Touch then
+                        if moveInput.UserInputType == Enum.UserInputType.MouseMovement
+                        or moveInput.UserInputType == Enum.UserInputType.Touch then
                             updateDrag(moveInput)
                         end
                     end)
                 end
             end
         end)
-        
+
         UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
                 stopDrag()
             end
         end)
-        
-        UserInputService.TouchEnded:Connect(function()
-            stopDrag()
-        end)
-        
+        UserInputService.TouchEnded:Connect(stopDrag)
+
         ScreenGui.AncestryChanged:Connect(function()
             if not ScreenGui.Parent then
                 stopDrag()
-                if updateConnection then
-                    updateConnection:Disconnect()
-                end
+                if updateConnection then updateConnection:Disconnect() end
             end
         end)
-        
+
         local minimized = false
-        
+
         local function minimize()
             ContentFrame.Visible = false
             MinimizeButton.Text = "+"
-            Frame.Size = UDim2.new(0, 400, 0, 38)
+            Frame.Size = UDim2.new(0, 620, 0, 38)
         end
-        
+
         local function maximize()
             ContentFrame.Visible = true
             MinimizeButton.Text = "–"
-            Frame.Size = UDim2.new(0, 400, 0, 450)
+            Frame.Size = UDim2.new(0, 620, 0, 500)
         end
-        
+
         local pc = not UserInputService.TouchEnabled and not UserInputService.GamepadEnabled
         local mobile = UserInputService.TouchEnabled
-        
+
         if pc then
-            CloseButton.MouseButton1Click:Connect(function()
-                ScreenGui:Destroy()
-            end)
-            
+            CloseButton.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
             MinimizeButton.MouseButton1Click:Connect(function()
-                if minimized then
-                    maximize()
-                else
-                    minimize()
-                end
+                if minimized then maximize() else minimize() end
                 minimized = not minimized
             end)
         elseif mobile then
-            CloseButton.InputBegan:Connect(function(input, process)
-                if not process and input.UserInputType == Enum.UserInputType.Touch then
+            CloseButton.InputBegan:Connect(function(input, processed)
+                if not processed and input.UserInputType == Enum.UserInputType.Touch then
                     ScreenGui:Destroy()
                 end
             end)
-            
-            MinimizeButton.InputBegan:Connect(function(input, process)
-                if not process and input.UserInputType == Enum.UserInputType.Touch then
-                    if minimized then
-                        maximize()
-                    else
-                        minimize()
-                    end
+            MinimizeButton.InputBegan:Connect(function(input, processed)
+                if not processed and input.UserInputType == Enum.UserInputType.Touch then
+                    if minimized then maximize() else minimize() end
                     minimized = not minimized
                 end
             end)
