@@ -4471,17 +4471,17 @@ addCommand({
         commandInfo = {}
         bannedIds = {}
 
-        local remotesToClean = {"xvkqmr"}
-        for _, remoteName in ipairs(remotesToClean) do
-            local remote = ReplicatedStorage:FindFirstChild(remoteName)
-            if remote then remote:Destroy() end
+        local guiRemote = ReplicatedStorage:FindFirstChild("SentriusDrawGui")
+        if guiRemote then
+            for _,p in ipairs(Players:GetPlayers()) do
+                pcall(function() guiRemote:FireClient(p,"destroy") end)
+            end
+            task.wait(0.3)
+            guiRemote:Destroy()
         end
 
         local drawRemote = ReplicatedStorage:FindFirstChild("SentriusDrawRemote")
         if drawRemote then drawRemote:Destroy() end
-
-        local guiRemote = ReplicatedStorage:FindFirstChild("SentriusDrawGui")
-        if guiRemote then guiRemote:Destroy() end
 
         local drawFolder = workspace:FindFirstChild("SentriusDrawings")
         if drawFolder then drawFolder:Destroy() end
@@ -4503,6 +4503,12 @@ addCommand({
         _G.SentriusDrawActive = {}
         _G.SentriusDrawColors = {}
 
+        local remotesToClean = {"xvkqmr"}
+        for _, remoteName in ipairs(remotesToClean) do
+            local remote = ReplicatedStorage:FindFirstChild(remoteName)
+            if remote then remote:Destroy() end
+        end
+
         if banFolder and banFolder.Parent then banFolder:Destroy() end
         if vault and vault.Parent then vault:Destroy() end
 
@@ -4511,7 +4517,6 @@ addCommand({
             if pg then
                 local guiNames = {
                     "SentriusDashboard",
-                    "SentriusNotification_",
                     "SentriusRequireGUI",
                     "SentriusPlayerTracker",
                     "SentriusMobileBtn",
@@ -4524,15 +4529,13 @@ addCommand({
                 }
 
                 for _, guiName in ipairs(guiNames) do
-                    if guiName:sub(-1) == "_" then
-                        for _, gui in ipairs(pg:GetChildren()) do
-                            if gui:IsA("ScreenGui") and gui.Name:sub(1,#guiName) == guiName then
-                                gui:Destroy()
-                            end
-                        end
-                    else
-                        local gui = pg:FindFirstChild(guiName)
-                        if gui then gui:Destroy() end
+                    local gui = pg:FindFirstChild(guiName)
+                    if gui then gui:Destroy() end
+                end
+
+                for _, gui in ipairs(pg:GetChildren()) do
+                    if gui:IsA("ScreenGui") and gui.Name:sub(1,20) == "SentriusNotification" then
+                        gui:Destroy()
                     end
                 end
             end
@@ -4546,14 +4549,24 @@ addCommand({
                 local dt = p.Character:FindFirstChild("DrawTool")
                 if dt then dt:Destroy() end
             end
+
+            pcall(function()
+                NET:FireClient(p, "execClient", [[
+                    local pg = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+                    for _,n in ipairs({"SentriusDrawUI","SentriusFreezeUI"}) do
+                        local g = pg:FindFirstChild(n)
+                        if g then g:Destroy() end
+                    end
+                    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+                ]])
+            end)
         end
 
         --so when sentrius moment reloads, it'll start off fresh
         _G.EKeybindPlayers = {}
+        _G.SentriusLoaded = false
 
         hint:Destroy()
-
-        _G.SentriusLoaded = false
     end
 })
 
@@ -4566,6 +4579,8 @@ addCommand({
     callback = function(plr, args)
         local hint = Instance.new("Hint", ws)
         hint.Text = "Sentrius is reloading..."
+
+        task.wait(1)
 
         running = false
         AntiAltEnabled = false
@@ -4609,17 +4624,17 @@ addCommand({
         commandInfo = {}
         bannedIds = {}
 
-        local remotesToClean = {"xvkqmr"}
-        for _, remoteName in ipairs(remotesToClean) do
-            local remote = ReplicatedStorage:FindFirstChild(remoteName)
-            if remote then remote:Destroy() end
+        local guiRemote = ReplicatedStorage:FindFirstChild("SentriusDrawGui")
+        if guiRemote then
+            for _,p in ipairs(Players:GetPlayers()) do
+                pcall(function() guiRemote:FireClient(p,"destroy") end)
+            end
+            task.wait(0.3)
+            guiRemote:Destroy()
         end
 
         local drawRemote = ReplicatedStorage:FindFirstChild("SentriusDrawRemote")
         if drawRemote then drawRemote:Destroy() end
-
-        local guiRemote = ReplicatedStorage:FindFirstChild("SentriusDrawGui")
-        if guiRemote then guiRemote:Destroy() end
 
         local drawFolder = workspace:FindFirstChild("SentriusDrawings")
         if drawFolder then drawFolder:Destroy() end
@@ -4641,6 +4656,12 @@ addCommand({
         _G.SentriusDrawActive = {}
         _G.SentriusDrawColors = {}
 
+        local remotesToClean = {"xvkqmr"}
+        for _, remoteName in ipairs(remotesToClean) do
+            local remote = ReplicatedStorage:FindFirstChild(remoteName)
+            if remote then remote:Destroy() end
+        end
+
         if banFolder and banFolder.Parent then banFolder:Destroy() end
         if vault and vault.Parent then vault:Destroy() end
 
@@ -4649,7 +4670,6 @@ addCommand({
             if pg then
                 local guiNames = {
                     "SentriusDashboard",
-                    "SentriusNotification_",
                     "SentriusRequireGUI",
                     "SentriusPlayerTracker",
                     "SentriusMobileBtn",
@@ -4662,15 +4682,13 @@ addCommand({
                 }
 
                 for _, guiName in ipairs(guiNames) do
-                    if guiName:sub(-1) == "_" then
-                        for _, gui in ipairs(pg:GetChildren()) do
-                            if gui:IsA("ScreenGui") and gui.Name:sub(1,#guiName) == guiName then
-                                gui:Destroy()
-                            end
-                        end
-                    else
-                        local gui = pg:FindFirstChild(guiName)
-                        if gui then gui:Destroy() end
+                    local gui = pg:FindFirstChild(guiName)
+                    if gui then gui:Destroy() end
+                end
+
+                for _, gui in ipairs(pg:GetChildren()) do
+                    if gui:IsA("ScreenGui") and gui.Name:sub(1,20) == "SentriusNotification" then
+                        gui:Destroy()
                     end
                 end
             end
@@ -4684,6 +4702,17 @@ addCommand({
                 local dt = p.Character:FindFirstChild("DrawTool")
                 if dt then dt:Destroy() end
             end
+
+            pcall(function()
+                NET:FireClient(p, "execClient", [[
+                    local pg = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+                    for _,n in ipairs({"SentriusDrawUI","SentriusFreezeUI"}) do
+                        local g = pg:FindFirstChild(n)
+                        if g then g:Destroy() end
+                    end
+                    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+                ]])
+            end)
         end
 
         --so when sentrius moment reloads, it'll start off fresh
