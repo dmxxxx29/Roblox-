@@ -9291,34 +9291,59 @@ addCommand({
             if not hrp or not hum then continue end
 
             local s,a = pcall(function()
-                return game:GetService("InsertService"):LoadAsset(304149009)
+                return game:GetService("InsertService"):LoadAsset(290069528)
             end)
 
             if not s or not a then
-                notify(plr,"Sentrius","failed to load piano",3)
+                notify(plr,"Sentrius","failed to load: "..tostring(a),4)
                 continue
             end
 
-            local piano = a:FindFirstChildOfClass("Model")
+            local piano
+            for _,v in ipairs(a:GetChildren()) do
+                if v:IsA("Model") or v:IsA("BasePart") then
+                    piano = v
+                    break
+                end
+            end
+
             if not piano then
                 a:Destroy()
-                notify(plr,"Sentrius","piano model not found inside asset",3)
+                notify(plr,"Sentrius","nothing found inside asset",3)
                 continue
             end
 
             piano.Parent = workspace
 
             local root
-            if piano.PrimaryPart then
-                root = piano.PrimaryPart
-            else
-                for _,v in ipairs(piano:GetDescendants()) do
-                    if v:IsA("BasePart") then
-                        root = v
-                        piano.PrimaryPart = v
-                        break
+            if piano:IsA("Model") then
+                if piano.PrimaryPart then
+                    root = piano.PrimaryPart
+                else
+                    for _,v in ipairs(piano:GetDescendants()) do
+                        if v:IsA("BasePart") then
+                            root = v
+                            piano.PrimaryPart = v
+                            break
+                        end
                     end
                 end
+
+                for _,v in ipairs(piano:GetDescendants()) do
+                    if v:IsA("BasePart") then
+                        v.Anchored = false
+                        v.CanCollide = true
+                        v.Locked = false
+                    end
+                end
+
+                piano:SetPrimaryPartCFrame(CFrame.new(hrp.Position+Vector3.new(0,80,0)))
+            else
+                root = piano
+                piano.Anchored = false
+                piano.CanCollide = true
+                piano.Locked = false
+                piano.CFrame = CFrame.new(hrp.Position+Vector3.new(0,80,0))
             end
 
             if not root then
@@ -9327,16 +9352,6 @@ addCommand({
                 continue
             end
 
-            for _,v in ipairs(piano:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    v.Anchored = false
-                    v.CanCollide = true
-                    v.Locked = false
-                end
-            end
-
-            piano:SetPrimaryPartCFrame(CFrame.new(hrp.Position + Vector3.new(0,80,0)))
-
             local sound = Instance.new("Sound")
             sound.SoundId = "rbxassetid://130972775"
             sound.Volume = 1
@@ -9344,6 +9359,31 @@ addCommand({
             sound.Parent = root
 
             local touched = false
+            local snapPos = hrp.Position
+
+            local trackConn
+            trackConn = game:GetService("RunService").Heartbeat:Connect(function()
+                if not target.Character or not target.Character:FindFirstChild("HumanoidRootPart") then
+                    trackConn:Disconnect()
+                    return
+                end
+                snapPos = target.Character.HumanoidRootPart.Position
+            end)
+
+            task.spawn(function()
+                while not touched and piano.Parent do
+                    if piano:IsA("Model") and piano.PrimaryPart then
+                        local pp = piano.PrimaryPart
+                        local cur = pp.CFrame
+                        piano:SetPrimaryPartCFrame(CFrame.new(snapPos.X, cur.Position.Y, snapPos.Z))
+                    elseif piano:IsA("BasePart") then
+                        local cur = piano.CFrame
+                        piano.CFrame = CFrame.new(snapPos.X, cur.Position.Y, snapPos.Z)
+                    end
+                    task.wait()
+                end
+            end)
+
             root.Touched:Connect(function(hit)
                 if touched then return end
                 if not hit or not hit.Parent then return end
@@ -9351,13 +9391,15 @@ addCommand({
                 local victim = Players:GetPlayerFromCharacter(hit.Parent)
                 if victim and victim == target then
                     touched = true
+                    trackConn:Disconnect()
                     sound:Play()
                     if target.Character and target.Character:FindFirstChildOfClass("Humanoid") then
                         target.Character:FindFirstChildOfClass("Humanoid").Health = 0
                     end
                     game:GetService("Debris"):AddItem(piano,5)
-                elseif not victim and hit.Name ~= "Terrain" then
+                elseif not victim and hit.Name ~= "Terrain" and hit.Name ~= "Baseplate" then
                     touched = true
+                    trackConn:Disconnect()
                     sound:Play()
                     game:GetService("Debris"):AddItem(piano,5)
                 end
