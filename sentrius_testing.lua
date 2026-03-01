@@ -9230,10 +9230,14 @@ addCommand({
             for _,v in ipairs(h:GetChildren()) do
                 if v:IsA("SpecialMesh") then v:Destroy() end
             end
-            local m = Instance.new("SpecialMesh")
-            m.MeshType = Enum.MeshType.Head
-            m.Scale = Vector3.new(1,1,1)
-            m.Parent = h
+            local s,a = pcall(function()
+                return game:GetService("InsertService"):LoadAsset(2432102561)
+            end)
+            if not s or not a then return end
+            local m = a:FindFirstChildOfClass("SpecialMesh")
+            if not m then a:Destroy() return end
+            m:Clone().Parent = h
+            a:Destroy()
         end
 
         local function clearstuff(target)
@@ -9256,8 +9260,7 @@ addCommand({
             gshirt(target)
             gpants(target)
             gface(target)
-            gaccessory(target,102306837886549)
-            gaccessory(target,99824297782644)
+            gaccessory(target,128977425250405)
         end
 
         notify(plr,"Sentrius","jeffery'd em",3)
