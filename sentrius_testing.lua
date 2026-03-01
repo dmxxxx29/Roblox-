@@ -9262,8 +9262,85 @@ addCommand({
             gface(target)
             gaccessory(target,128977425250405)
         end
+    end
+})
 
-        notify(plr,"Sentrius","jeffery'd em",3)
+addCommand({
+    name = "piano",
+    aliases = {},
+    desc = "drops a piano on someone i guess",
+    usage = prefix .. "piano [player (optional)]",
+    callback = function(plr, args)
+        local targets = {plr}
+
+        if args and #args > 0 then
+            local found = GetPlayer(args[1], plr)
+            if found and #found > 0 then
+                targets = found
+            end
+        end
+
+        for _,target in ipairs(targets) do
+            if not target.Character then
+                notify(plr,"Sentrius",target.DisplayName.." has no character!",3)
+                continue
+            end
+
+            local hrp = target.Character:FindFirstChild("HumanoidRootPart")
+            local hum = target.Character:FindFirstChildOfClass("Humanoid")
+            if not hrp or not hum then continue end
+
+            hum.WalkSpeed = 0
+            hum.JumpPower = 0
+            hum.JumpHeight = 0
+
+            local s,a = pcall(function()
+                return game:GetService("InsertService"):LoadAsset(139978125291257)
+            end)
+            if not s or not a then
+                notify(plr,"Sentrius","failed to load piano lol",3)
+                continue
+            end
+
+            local piano = a:FindFirstChildOfClass("Model") or a:FindFirstChildOfClass("BasePart")
+            if not piano then a:Destroy() continue end
+
+            piano = piano:IsA("Model") and piano or a
+
+            local root = piano:IsA("Model") and (piano.PrimaryPart or piano:FindFirstChildOfClass("BasePart")) or piano
+
+            piano.Parent = workspace
+
+            if piano:IsA("Model") then
+                piano:SetPrimaryPartCFrame(CFrame.new(hrp.Position + Vector3.new(0,60,0)))
+            else
+                piano.CFrame = CFrame.new(hrp.Position + Vector3.new(0,60,0))
+                piano.Anchored = false
+            end
+
+            if piano:IsA("Model") then
+                for _,v in ipairs(piano:GetDescendants()) do
+                    if v:IsA("BasePart") then
+                        v.Anchored = false
+                    end
+                end
+            end
+
+            local touched = false
+            root.Touched:Connect(function(hit)
+                if touched then return end
+                if hit:IsDescendantOf(target.Character) then
+                    touched = true
+                    if target.Character and target.Character:FindFirstChildOfClass("Humanoid") then
+                        target.Character:FindFirstChildOfClass("Humanoid").Health = 0
+                    end
+                end
+            end)
+
+            a:Destroy()
+        end
+
+        notify(plr,"Sentrius","piano dropped",3)
     end
 })
 
