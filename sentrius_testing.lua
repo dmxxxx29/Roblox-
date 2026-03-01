@@ -9570,33 +9570,6 @@ addCommand({
             local touched = false
             local snapPos = hrp.Position
 
-            local function disableSit()
-                pcall(function()
-                    NET:FireClient(target, "execClient", [[
-                        local lp = game.Players.LocalPlayer
-                        local function noSit(char)
-                            local h = char:WaitForChild("Humanoid",5)
-                            if h then
-                                h:GetPropertyChangedSignal("Sit"):Connect(function()
-                                    if h.Sit then h.Sit = false end
-                                end)
-                            end
-                        end
-                        if lp.Character then noSit(lp.Character) end
-                        lp.CharacterAdded:Connect(noSit)
-                        _G.SentriusPianoNoSit = true
-                    ]])
-                end)
-            end
-
-            local function enableSit()
-                pcall(function()
-                    NET:FireClient(target, "execClient", [[
-                        _G.SentriusPianoNoSit = false
-                    ]])
-                end)
-            end
-
             local trackConn
             trackConn = game:GetService("RunService").Heartbeat:Connect(function()
                 if not target.Character or not target.Character:FindFirstChild("HumanoidRootPart") then
@@ -9634,6 +9607,7 @@ addCommand({
                                 end
                             end
 
+                            -- enable collision now so it lands on the ground naturally
                             if piano:IsA("Model") then
                                 for _,v in ipairs(piano:GetDescendants()) do
                                     if v:IsA("BasePart") then
@@ -9643,18 +9617,6 @@ addCommand({
                             else
                                 piano.CanCollide = true
                             end
-
-                            disableSit()
-
-                            task.spawn(function()
-                                local elapsed = 0
-                                while elapsed < 5 do
-                                    if not piano.Parent then break end
-                                    task.wait(0.1)
-                                    elapsed = elapsed + 0.1
-                                end
-                                enableSit()
-                            end)
 
                             game:GetService("Debris"):AddItem(piano,5)
                         end
