@@ -9290,57 +9290,82 @@ addCommand({
             local hum = target.Character:FindFirstChildOfClass("Humanoid")
             if not hrp or not hum then continue end
 
-            hum.WalkSpeed = 0
-            hum.JumpPower = 0
-            hum.JumpHeight = 0
-
             local s,a = pcall(function()
-                return game:GetService("InsertService"):LoadAsset(139978125291257)
+                return game:GetService("InsertService"):LoadAsset(304149009)
             end)
+
             if not s or not a then
-                notify(plr,"Sentrius","failed to load piano lol",3)
+                notify(plr,"Sentrius","failed to load piano",3)
                 continue
             end
 
-            local piano = a:FindFirstChildOfClass("Model") or a:FindFirstChildOfClass("BasePart")
-            if not piano then a:Destroy() continue end
-
-            piano = piano:IsA("Model") and piano or a
-
-            local root = piano:IsA("Model") and (piano.PrimaryPart or piano:FindFirstChildOfClass("BasePart")) or piano
+            local piano = a:FindFirstChildOfClass("Model")
+            if not piano then
+                a:Destroy()
+                notify(plr,"Sentrius","piano model not found inside asset",3)
+                continue
+            end
 
             piano.Parent = workspace
 
-            if piano:IsA("Model") then
-                piano:SetPrimaryPartCFrame(CFrame.new(hrp.Position + Vector3.new(0,60,0)))
+            local root
+            if piano.PrimaryPart then
+                root = piano.PrimaryPart
             else
-                piano.CFrame = CFrame.new(hrp.Position + Vector3.new(0,60,0))
-                piano.Anchored = false
-            end
-
-            if piano:IsA("Model") then
                 for _,v in ipairs(piano:GetDescendants()) do
                     if v:IsA("BasePart") then
-                        v.Anchored = false
+                        root = v
+                        piano.PrimaryPart = v
+                        break
                     end
                 end
             end
+
+            if not root then
+                piano:Destroy()
+                a:Destroy()
+                continue
+            end
+
+            for _,v in ipairs(piano:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    v.Anchored = false
+                    v.CanCollide = true
+                    v.Locked = false
+                end
+            end
+
+            piano:SetPrimaryPartCFrame(CFrame.new(hrp.Position + Vector3.new(0,80,0)))
+
+            local sound = Instance.new("Sound")
+            sound.SoundId = "rbxassetid://130972775"
+            sound.Volume = 1
+            sound.RollOffMaxDistance = 200
+            sound.Parent = root
 
             local touched = false
             root.Touched:Connect(function(hit)
                 if touched then return end
-                if hit:IsDescendantOf(target.Character) then
+                if not hit or not hit.Parent then return end
+                if hit:IsDescendantOf(piano) then return end
+                local victim = Players:GetPlayerFromCharacter(hit.Parent)
+                if victim and victim == target then
                     touched = true
+                    sound:Play()
                     if target.Character and target.Character:FindFirstChildOfClass("Humanoid") then
                         target.Character:FindFirstChildOfClass("Humanoid").Health = 0
                     end
+                    game:GetService("Debris"):AddItem(piano,5)
+                elseif not victim and hit.Name ~= "Terrain" then
+                    touched = true
+                    sound:Play()
+                    game:GetService("Debris"):AddItem(piano,5)
                 end
             end)
 
             a:Destroy()
+            game:GetService("Debris"):AddItem(piano,30)
         end
-
-        notify(plr,"Sentrius","piano dropped",3)
     end
 })
 
