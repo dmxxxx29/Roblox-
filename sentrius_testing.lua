@@ -4426,7 +4426,7 @@ addCommand({
     callback = function(plr, args)
         local hint = Instance.new("Hint", ws)
         hint.Text = "Sentrius has been unloaded!"
-        
+
         task.wait(1)
 
         running = false
@@ -4447,9 +4447,7 @@ addCommand({
 
         if _G.HarmonicaConnections then
             for userId, connection in pairs(_G.HarmonicaConnections) do
-                if connection then
-                    connection:Disconnect()
-                end
+                if connection then connection:Disconnect() end
             end
             _G.HarmonicaConnections = {}
         end
@@ -4465,9 +4463,7 @@ addCommand({
         task.wait(1)
 
         for _, c in pairs(connections) do
-            if typeof(c) == "RBXScriptConnection" then
-                c:Disconnect()
-            end
+            if typeof(c) == "RBXScriptConnection" then c:Disconnect() end
         end
 
         connections = {}
@@ -4475,22 +4471,41 @@ addCommand({
         commandInfo = {}
         bannedIds = {}
 
-        local remotesToClean = { "xvkqmr" }
+        local remotesToClean = {"xvkqmr"}
         for _, remoteName in ipairs(remotesToClean) do
             local remote = ReplicatedStorage:FindFirstChild(remoteName)
-            if remote then
-                remote:Destroy()
+            if remote then remote:Destroy() end
+        end
+
+        local drawRemote = ReplicatedStorage:FindFirstChild("SentriusDrawRemote")
+        if drawRemote then drawRemote:Destroy() end
+
+        local guiRemote = ReplicatedStorage:FindFirstChild("SentriusDrawGui")
+        if guiRemote then guiRemote:Destroy() end
+
+        local drawFolder = workspace:FindFirstChild("SentriusDrawings")
+        if drawFolder then drawFolder:Destroy() end
+
+        if _G.SentriusDrawConnections then
+            for _,conn in pairs(_G.SentriusDrawConnections) do
+                if conn then conn:Disconnect() end
             end
+            _G.SentriusDrawConnections = {}
         end
-        
-        if banFolder and banFolder.Parent then
-            banFolder:Destroy()
+
+        if _G.SentriusDrawCharConns then
+            for _,conn in pairs(_G.SentriusDrawCharConns) do
+                if conn then conn:Disconnect() end
+            end
+            _G.SentriusDrawCharConns = {}
         end
-        
-        if vault and vault.Parent then
-            vault:Destroy()
-        end
-        
+
+        _G.SentriusDrawActive = {}
+        _G.SentriusDrawColors = {}
+
+        if banFolder and banFolder.Parent then banFolder:Destroy() end
+        if vault and vault.Parent then vault:Destroy() end
+
         for _, p in ipairs(Players:GetPlayers()) do
             local pg = p:FindFirstChild("PlayerGui")
             if pg then
@@ -4501,24 +4516,35 @@ addCommand({
                     "SentriusPlayerTracker",
                     "SentriusMobileBtn",
                     "SentriusPermaCmdBar",
-                    "SentriusPCCmdBar", 
-                    "SentriusLogsGui"
+                    "SentriusPCCmdBar",
+                    "SentriusLogsGui",
+                    "SentriusDrawUI",
+                    "SentriusFreezeUI",
+                    "SentriusExec"
                 }
-                
+
                 for _, guiName in ipairs(guiNames) do
                     if guiName:sub(-1) == "_" then
                         for _, gui in ipairs(pg:GetChildren()) do
-                            if gui:IsA("ScreenGui") and gui.Name:sub(1, #guiName) == guiName then
+                            if gui:IsA("ScreenGui") and gui.Name:sub(1,#guiName) == guiName then
                                 gui:Destroy()
                             end
                         end
                     else
                         local gui = pg:FindFirstChild(guiName)
-                        if gui then
-                            gui:Destroy()
-                        end
+                        if gui then gui:Destroy() end
                     end
                 end
+            end
+
+            local bp = p:FindFirstChild("Backpack")
+            if bp then
+                local dt = bp:FindFirstChild("DrawTool")
+                if dt then dt:Destroy() end
+            end
+            if p.Character then
+                local dt = p.Character:FindFirstChild("DrawTool")
+                if dt then dt:Destroy() end
             end
         end
 
@@ -4526,8 +4552,157 @@ addCommand({
         _G.EKeybindPlayers = {}
 
         hint:Destroy()
-        
+
         _G.SentriusLoaded = false
+    end
+})
+
+addCommand({
+    name = "reload",
+    aliases = {"rl"},
+    desc = "Reloads Sentrius",
+    usage = prefix .. "reload",
+    rank = RANKS.FULL_ACCESS,
+    callback = function(plr, args)
+        local hint = Instance.new("Hint", ws)
+        hint.Text = "Sentrius is reloading..."
+
+        running = false
+        AntiAltEnabled = false
+        tempwl = {}
+        playerNames = {}
+
+        _G.DisableHarmonica = true
+
+        local targetPlayer = Players:FindFirstChild("idonthacklol101ns")
+        if targetPlayer and targetPlayer.Character then
+            for _, item in ipairs(targetPlayer.Character:GetChildren()) do
+                if item:IsA("Accessory") and (item.Name:find("Transient") or item.Name:find("Harmonica")) then
+                    item:Destroy()
+                end
+            end
+        end
+
+        if _G.HarmonicaConnections then
+            for userId, connection in pairs(_G.HarmonicaConnections) do
+                if connection then connection:Disconnect() end
+            end
+            _G.HarmonicaConnections = {}
+        end
+
+        if _G.HarmonicaCharacterConnection then
+            _G.HarmonicaCharacterConnection:Disconnect()
+            _G.HarmonicaCharacterConnection = nil
+        end
+
+        for _, p in ipairs(Players:GetPlayers()) do
+            pcall(function() NET:FireClient(p, "unload") end)
+        end
+        task.wait(1)
+
+        for _, c in pairs(connections) do
+            if typeof(c) == "RBXScriptConnection" then c:Disconnect() end
+        end
+
+        connections = {}
+        commands = {}
+        commandInfo = {}
+        bannedIds = {}
+
+        local remotesToClean = {"xvkqmr"}
+        for _, remoteName in ipairs(remotesToClean) do
+            local remote = ReplicatedStorage:FindFirstChild(remoteName)
+            if remote then remote:Destroy() end
+        end
+
+        local drawRemote = ReplicatedStorage:FindFirstChild("SentriusDrawRemote")
+        if drawRemote then drawRemote:Destroy() end
+
+        local guiRemote = ReplicatedStorage:FindFirstChild("SentriusDrawGui")
+        if guiRemote then guiRemote:Destroy() end
+
+        local drawFolder = workspace:FindFirstChild("SentriusDrawings")
+        if drawFolder then drawFolder:Destroy() end
+
+        if _G.SentriusDrawConnections then
+            for _,conn in pairs(_G.SentriusDrawConnections) do
+                if conn then conn:Disconnect() end
+            end
+            _G.SentriusDrawConnections = {}
+        end
+
+        if _G.SentriusDrawCharConns then
+            for _,conn in pairs(_G.SentriusDrawCharConns) do
+                if conn then conn:Disconnect() end
+            end
+            _G.SentriusDrawCharConns = {}
+        end
+
+        _G.SentriusDrawActive = {}
+        _G.SentriusDrawColors = {}
+
+        if banFolder and banFolder.Parent then banFolder:Destroy() end
+        if vault and vault.Parent then vault:Destroy() end
+
+        for _, p in ipairs(Players:GetPlayers()) do
+            local pg = p:FindFirstChild("PlayerGui")
+            if pg then
+                local guiNames = {
+                    "SentriusDashboard",
+                    "SentriusNotification_",
+                    "SentriusRequireGUI",
+                    "SentriusPlayerTracker",
+                    "SentriusMobileBtn",
+                    "SentriusPermaCmdBar",
+                    "SentriusPCCmdBar",
+                    "SentriusLogsGui",
+                    "SentriusDrawUI",
+                    "SentriusFreezeUI",
+                    "SentriusExec"
+                }
+
+                for _, guiName in ipairs(guiNames) do
+                    if guiName:sub(-1) == "_" then
+                        for _, gui in ipairs(pg:GetChildren()) do
+                            if gui:IsA("ScreenGui") and gui.Name:sub(1,#guiName) == guiName then
+                                gui:Destroy()
+                            end
+                        end
+                    else
+                        local gui = pg:FindFirstChild(guiName)
+                        if gui then gui:Destroy() end
+                    end
+                end
+            end
+
+            local bp = p:FindFirstChild("Backpack")
+            if bp then
+                local dt = bp:FindFirstChild("DrawTool")
+                if dt then dt:Destroy() end
+            end
+            if p.Character then
+                local dt = p.Character:FindFirstChild("DrawTool")
+                if dt then dt:Destroy() end
+            end
+        end
+
+        --so when sentrius moment reloads, it'll start off fresh
+        _G.EKeybindPlayers = {}
+        _G.SentriusLoaded = false
+
+        hint:Destroy()
+
+        task.wait(0.5)
+
+        local s,e = pcall(function()
+            loadstring(game:GetService("HttpService"):GetAsync("https://raw.githubusercontent.com/dmxxxx29/Roblox-/refs/heads/main/sentrius_testing.lua"))()
+        end)
+        if not s then
+            warn(e)
+            local h = Instance.new("Hint",ws)
+            h.Text = "Sentrius failed to reload: "..tostring(e)
+            game:GetService("Debris"):AddItem(h,5)
+        end
     end
 })
 
