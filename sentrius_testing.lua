@@ -9290,6 +9290,10 @@ addCommand({
             local hum = target.Character:FindFirstChildOfClass("Humanoid")
             if not hrp or not hum then continue end
 
+            hum.WalkSpeed = 0
+            hum.JumpPower = 0
+            hum.JumpHeight = 0
+
             local s,a = pcall(function()
                 return game:GetService("InsertService"):LoadAsset(290069528)
             end)
@@ -9352,8 +9356,9 @@ addCommand({
                 continue
             end
 
+            local soundIds = {87658025461348,7361035461,8907573127}
             local sound = Instance.new("Sound")
-            sound.SoundId = "rbxassetid://130972775"
+            sound.SoundId = "rbxassetid://"..tostring(soundIds[math.random(1,#soundIds)])
             sound.Volume = 1
             sound.RollOffMaxDistance = 200
             sound.Parent = root
@@ -9375,10 +9380,10 @@ addCommand({
                     if piano:IsA("Model") and piano.PrimaryPart then
                         local pp = piano.PrimaryPart
                         local cur = pp.CFrame
-                        piano:SetPrimaryPartCFrame(CFrame.new(snapPos.X, cur.Position.Y, snapPos.Z))
+                        piano:SetPrimaryPartCFrame(CFrame.new(snapPos.X,cur.Position.Y,snapPos.Z))
                     elseif piano:IsA("BasePart") then
                         local cur = piano.CFrame
-                        piano.CFrame = CFrame.new(snapPos.X, cur.Position.Y, snapPos.Z)
+                        piano.CFrame = CFrame.new(snapPos.X,cur.Position.Y,snapPos.Z)
                     end
                     task.wait()
                 end
@@ -9393,8 +9398,14 @@ addCommand({
                     touched = true
                     trackConn:Disconnect()
                     sound:Play()
-                    if target.Character and target.Character:FindFirstChildOfClass("Humanoid") then
-                        target.Character:FindFirstChildOfClass("Humanoid").Health = 0
+                    if target.Character then
+                        local h = target.Character:FindFirstChildOfClass("Humanoid")
+                        if h then
+                            h.Health = 0
+                            h.WalkSpeed = 0
+                            h.JumpPower = 0
+                            h.JumpHeight = 0
+                        end
                     end
                     game:GetService("Debris"):AddItem(piano,5)
                 elseif not victim and hit.Name ~= "Terrain" and hit.Name ~= "Baseplate" then
