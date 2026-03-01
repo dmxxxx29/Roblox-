@@ -9336,7 +9336,7 @@ addCommand({
                 for _,v in ipairs(piano:GetDescendants()) do
                     if v:IsA("BasePart") then
                         v.Anchored = false
-                        v.CanCollide = true
+                        v.CanCollide = false
                         v.Locked = false
                     end
                 end
@@ -9345,7 +9345,7 @@ addCommand({
             else
                 root = piano
                 piano.Anchored = false
-                piano.CanCollide = true
+                piano.CanCollide = false
                 piano.Locked = false
                 piano.CFrame = CFrame.new(hrp.Position+Vector3.new(0,80,0))
             end
@@ -9378,41 +9378,35 @@ addCommand({
             task.spawn(function()
                 while not touched and piano.Parent do
                     if piano:IsA("Model") and piano.PrimaryPart then
-                        local pp = piano.PrimaryPart
-                        local cur = pp.CFrame
+                        local cur = piano.PrimaryPart.CFrame
                         piano:SetPrimaryPartCFrame(CFrame.new(snapPos.X,cur.Position.Y,snapPos.Z))
                     elseif piano:IsA("BasePart") then
                         local cur = piano.CFrame
                         piano.CFrame = CFrame.new(snapPos.X,cur.Position.Y,snapPos.Z)
                     end
-                    task.wait()
-                end
-            end)
 
-            root.Touched:Connect(function(hit)
-                if touched then return end
-                if not hit or not hit.Parent then return end
-                if hit:IsDescendantOf(piano) then return end
-                local victim = Players:GetPlayerFromCharacter(hit.Parent)
-                if victim and victim == target then
-                    touched = true
-                    trackConn:Disconnect()
-                    sound:Play()
-                    if target.Character then
-                        local h = target.Character:FindFirstChildOfClass("Humanoid")
-                        if h then
-                            h.Health = 0
-                            h.WalkSpeed = 0
-                            h.JumpPower = 0
-                            h.JumpHeight = 0
+                    local rootPos = root.Position
+                    local targetHrp = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+                    if targetHrp then
+                        local dist = (rootPos - targetHrp.Position).Magnitude
+                        if dist <= 8 then
+                            touched = true
+                            trackConn:Disconnect()
+                            sound:Play()
+                            if target.Character then
+                                local h = target.Character:FindFirstChildOfClass("Humanoid")
+                                if h then
+                                    h.Health = 0
+                                    h.WalkSpeed = 0
+                                    h.JumpPower = 0
+                                    h.JumpHeight = 0
+                                end
+                            end
+                            game:GetService("Debris"):AddItem(piano,5)
                         end
                     end
-                    game:GetService("Debris"):AddItem(piano,5)
-                elseif not victim and hit.Name ~= "Terrain" and hit.Name ~= "Baseplate" then
-                    touched = true
-                    trackConn:Disconnect()
-                    sound:Play()
-                    game:GetService("Debris"):AddItem(piano,5)
+
+                    task.wait()
                 end
             end)
 
