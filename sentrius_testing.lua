@@ -9215,18 +9215,44 @@ addCommand({
             nf.Parent = h
         end
 
+        local function fixskin(target)
+            local skincolor = Color3.fromRGB(255,220,185)
+            for _,v in ipairs(target.Character:GetDescendants()) do
+                if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                    v.BrickColor = BrickColor.new(skincolor)
+                end
+            end
+        end
+
+        local function fixhead(target)
+            local h = target.Character:FindFirstChild("Head")
+            if not h then return end
+            for _,v in ipairs(h:GetChildren()) do
+                if v:IsA("SpecialMesh") then v:Destroy() end
+            end
+            local m = Instance.new("SpecialMesh")
+            m.MeshType = Enum.MeshType.Head
+            m.Scale = Vector3.new(1,1,1)
+            m.Parent = h
+        end
+
+        local function clearstuff(target)
+            for _,v in ipairs(target.Character:GetChildren()) do
+                if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") then
+                    v:Destroy()
+                end
+            end
+        end
+
         for _,target in ipairs(targets) do
             if not target.Character then
                 notify(plr,"Sentrius",target.DisplayName.." has no character!",3)
                 continue
             end
 
-            for _,v in ipairs(target.Character:GetChildren()) do
-                if v:IsA("Shirt") or v:IsA("Pants") then
-                    v:Destroy()
-                end
-            end
-
+            clearstuff(target)
+            fixskin(target)
+            fixhead(target)
             gshirt(target)
             gpants(target)
             gface(target)
