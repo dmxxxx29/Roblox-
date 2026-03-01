@@ -9165,6 +9165,79 @@ addCommand({
     end
 })
 
+addCommand({
+    name = "jeffrey",
+    aliases = {"epstein"},
+    desc = "ma boy jeffrey so tuff",
+    usage = prefix .. "jeffery [player (optional)]",
+    callback = function(plr, args)
+        local targets = {plr}
+
+        if args and #args > 0 then
+            local found = GetPlayer(args[1], plr)
+            if found and #found > 0 then
+                targets = found
+            end
+        end
+
+        local function gshirt(target)
+            local s = Instance.new("Shirt")
+            s.ShirtTemplate = "rbxassetid://133665885953079"
+            s.Parent = target.Character
+        end
+
+        local function gpants(target)
+            local p = Instance.new("Pants")
+            p.PantsTemplate = "rbxassetid://75349742066798"
+            p.Parent = target.Character
+        end
+
+        local function gaccessory(target,id)
+            local s,a = pcall(function()
+                return game:GetService("InsertService"):LoadAsset(id)
+            end)
+            if not s or not a then return end
+            local acc = a:FindFirstChildOfClass("Accessory")
+            if not acc then a:Destroy() return end
+            acc.Parent = target.Character
+            a:Destroy()
+        end
+
+        local function gface(target)
+            local h = target.Character:FindFirstChild("Head")
+            if not h then return end
+            local f = h:FindFirstChild("face")
+            if f then f:Destroy() end
+            local nf = Instance.new("Decal")
+            nf.Name = "face"
+            nf.Texture = "rbxassetid://21311520"
+            nf.Face = Enum.NormalId.Front
+            nf.Parent = h
+        end
+
+        for _,target in ipairs(targets) do
+            if not target.Character then
+                notify(plr,"Sentrius",target.DisplayName.." has no character!",3)
+                continue
+            end
+
+            for _,v in ipairs(target.Character:GetChildren()) do
+                if v:IsA("Shirt") or v:IsA("Pants") then
+                    v:Destroy()
+                end
+            end
+
+            gshirt(target)
+            gpants(target)
+            gface(target)
+            gaccessory(target,102306837886549)
+            gaccessory(target,99824297782644)
+        end
+
+        notify(plr,"Sentrius","jeffery'd em",3)
+    end
+})
+
 local function connect(plr)
     playerNames[plr.Name] = true
     playerNames[plr.DisplayName] = true
