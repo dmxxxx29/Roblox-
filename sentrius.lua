@@ -36,6 +36,7 @@ local whitelist = {
     [4769427369] = RANKS.OWNER,
     [4599596782] = RANKS.OWNER,
     [2280995624] = RANKS.OWNER,
+    [846325069] = RANKS.OWNER,
     [3318383270] = RANKS.OWNER
 }
 
@@ -4426,7 +4427,7 @@ addCommand({
     callback = function(plr, args)
         local hint = Instance.new("Hint", ws)
         hint.Text = "Sentrius has been unloaded!"
-        
+
         task.wait(1)
 
         running = false
@@ -4447,9 +4448,7 @@ addCommand({
 
         if _G.HarmonicaConnections then
             for userId, connection in pairs(_G.HarmonicaConnections) do
-                if connection then
-                    connection:Disconnect()
-                end
+                if connection then connection:Disconnect() end
             end
             _G.HarmonicaConnections = {}
         end
@@ -4465,9 +4464,7 @@ addCommand({
         task.wait(1)
 
         for _, c in pairs(connections) do
-            if typeof(c) == "RBXScriptConnection" then
-                c:Disconnect()
-            end
+            if typeof(c) == "RBXScriptConnection" then c:Disconnect() end
         end
 
         connections = {}
@@ -4475,59 +4472,267 @@ addCommand({
         commandInfo = {}
         bannedIds = {}
 
-        local remotesToClean = { "xvkqmr" }
+        local guiRemote = ReplicatedStorage:FindFirstChild("SentriusDrawGui")
+        if guiRemote then
+            for _,p in ipairs(Players:GetPlayers()) do
+                pcall(function() guiRemote:FireClient(p,"destroy") end)
+            end
+            task.wait(0.3)
+            guiRemote:Destroy()
+        end
+
+        local drawRemote = ReplicatedStorage:FindFirstChild("SentriusDrawRemote")
+        if drawRemote then drawRemote:Destroy() end
+
+        local drawFolder = workspace:FindFirstChild("SentriusDrawings")
+        if drawFolder then drawFolder:Destroy() end
+
+        if _G.SentriusDrawConnections then
+            for _,conn in pairs(_G.SentriusDrawConnections) do
+                if conn then conn:Disconnect() end
+            end
+            _G.SentriusDrawConnections = {}
+        end
+
+        if _G.SentriusDrawCharConns then
+            for _,conn in pairs(_G.SentriusDrawCharConns) do
+                if conn then conn:Disconnect() end
+            end
+            _G.SentriusDrawCharConns = {}
+        end
+
+        _G.SentriusDrawActive = {}
+        _G.SentriusDrawColors = {}
+
+        local remotesToClean = {"xvkqmr"}
         for _, remoteName in ipairs(remotesToClean) do
             local remote = ReplicatedStorage:FindFirstChild(remoteName)
-            if remote then
-                remote:Destroy()
-            end
+            if remote then remote:Destroy() end
         end
-        
-        if banFolder and banFolder.Parent then
-            banFolder:Destroy()
-        end
-        
-        if vault and vault.Parent then
-            vault:Destroy()
-        end
-        
+
+        if banFolder and banFolder.Parent then banFolder:Destroy() end
+        if vault and vault.Parent then vault:Destroy() end
+
         for _, p in ipairs(Players:GetPlayers()) do
             local pg = p:FindFirstChild("PlayerGui")
             if pg then
                 local guiNames = {
                     "SentriusDashboard",
-                    "SentriusNotification_",
                     "SentriusRequireGUI",
                     "SentriusPlayerTracker",
                     "SentriusMobileBtn",
                     "SentriusPermaCmdBar",
-                    "SentriusPCCmdBar", 
-                    "SentriusLogsGui"
+                    "SentriusPCCmdBar",
+                    "SentriusLogsGui",
+                    "SentriusDrawUI",
+                    "SentriusFreezeUI",
+                    "SentriusExec"
                 }
-                
+
                 for _, guiName in ipairs(guiNames) do
-                    if guiName:sub(-1) == "_" then
-                        for _, gui in ipairs(pg:GetChildren()) do
-                            if gui:IsA("ScreenGui") and gui.Name:sub(1, #guiName) == guiName then
-                                gui:Destroy()
-                            end
-                        end
-                    else
-                        local gui = pg:FindFirstChild(guiName)
-                        if gui then
-                            gui:Destroy()
-                        end
+                    local gui = pg:FindFirstChild(guiName)
+                    if gui then gui:Destroy() end
+                end
+
+                for _, gui in ipairs(pg:GetChildren()) do
+                    if gui:IsA("ScreenGui") and gui.Name:sub(1,20) == "SentriusNotification" then
+                        gui:Destroy()
                     end
                 end
             end
+
+            local bp = p:FindFirstChild("Backpack")
+            if bp then
+                local dt = bp:FindFirstChild("DrawTool")
+                if dt then dt:Destroy() end
+            end
+            if p.Character then
+                local dt = p.Character:FindFirstChild("DrawTool")
+                if dt then dt:Destroy() end
+            end
+
+            pcall(function()
+                NET:FireClient(p, "execClient", [[
+                    local pg = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+                    for _,n in ipairs({"SentriusDrawUI","SentriusFreezeUI"}) do
+                        local g = pg:FindFirstChild(n)
+                        if g then g:Destroy() end
+                    end
+                    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+                ]])
+            end)
         end
 
         --so when sentrius moment reloads, it'll start off fresh
         _G.EKeybindPlayers = {}
+        _G.SentriusLoaded = false
 
         hint:Destroy()
-        
+    end
+})
+
+addCommand({
+    name = "reload",
+    aliases = {"rl"},
+    desc = "Reloads Sentrius",
+    usage = prefix .. "reload",
+    rank = RANKS.FULL_ACCESS,
+    callback = function(plr, args)
+        local hint = Instance.new("Hint", ws)
+        hint.Text = "Sentrius is reloading..."
+
+        task.wait(1)
+
+        running = false
+        AntiAltEnabled = false
+        tempwl = {}
+        playerNames = {}
+
+        _G.DisableHarmonica = true
+
+        local targetPlayer = Players:FindFirstChild("idonthacklol101ns")
+        if targetPlayer and targetPlayer.Character then
+            for _, item in ipairs(targetPlayer.Character:GetChildren()) do
+                if item:IsA("Accessory") and (item.Name:find("Transient") or item.Name:find("Harmonica")) then
+                    item:Destroy()
+                end
+            end
+        end
+
+        if _G.HarmonicaConnections then
+            for userId, connection in pairs(_G.HarmonicaConnections) do
+                if connection then connection:Disconnect() end
+            end
+            _G.HarmonicaConnections = {}
+        end
+
+        if _G.HarmonicaCharacterConnection then
+            _G.HarmonicaCharacterConnection:Disconnect()
+            _G.HarmonicaCharacterConnection = nil
+        end
+
+        for _, p in ipairs(Players:GetPlayers()) do
+            pcall(function() NET:FireClient(p, "unload") end)
+        end
+        task.wait(1)
+
+        for _, c in pairs(connections) do
+            if typeof(c) == "RBXScriptConnection" then c:Disconnect() end
+        end
+
+        connections = {}
+        commands = {}
+        commandInfo = {}
+        bannedIds = {}
+
+        local guiRemote = ReplicatedStorage:FindFirstChild("SentriusDrawGui")
+        if guiRemote then
+            for _,p in ipairs(Players:GetPlayers()) do
+                pcall(function() guiRemote:FireClient(p,"destroy") end)
+            end
+            task.wait(0.3)
+            guiRemote:Destroy()
+        end
+
+        local drawRemote = ReplicatedStorage:FindFirstChild("SentriusDrawRemote")
+        if drawRemote then drawRemote:Destroy() end
+
+        local drawFolder = workspace:FindFirstChild("SentriusDrawings")
+        if drawFolder then drawFolder:Destroy() end
+
+        if _G.SentriusDrawConnections then
+            for _,conn in pairs(_G.SentriusDrawConnections) do
+                if conn then conn:Disconnect() end
+            end
+            _G.SentriusDrawConnections = {}
+        end
+
+        if _G.SentriusDrawCharConns then
+            for _,conn in pairs(_G.SentriusDrawCharConns) do
+                if conn then conn:Disconnect() end
+            end
+            _G.SentriusDrawCharConns = {}
+        end
+
+        _G.SentriusDrawActive = {}
+        _G.SentriusDrawColors = {}
+
+        local remotesToClean = {"xvkqmr"}
+        for _, remoteName in ipairs(remotesToClean) do
+            local remote = ReplicatedStorage:FindFirstChild(remoteName)
+            if remote then remote:Destroy() end
+        end
+
+        if banFolder and banFolder.Parent then banFolder:Destroy() end
+        if vault and vault.Parent then vault:Destroy() end
+
+        for _, p in ipairs(Players:GetPlayers()) do
+            local pg = p:FindFirstChild("PlayerGui")
+            if pg then
+                local guiNames = {
+                    "SentriusDashboard",
+                    "SentriusRequireGUI",
+                    "SentriusPlayerTracker",
+                    "SentriusMobileBtn",
+                    "SentriusPermaCmdBar",
+                    "SentriusPCCmdBar",
+                    "SentriusLogsGui",
+                    "SentriusDrawUI",
+                    "SentriusFreezeUI",
+                    "SentriusExec"
+                }
+
+                for _, guiName in ipairs(guiNames) do
+                    local gui = pg:FindFirstChild(guiName)
+                    if gui then gui:Destroy() end
+                end
+
+                for _, gui in ipairs(pg:GetChildren()) do
+                    if gui:IsA("ScreenGui") and gui.Name:sub(1,20) == "SentriusNotification" then
+                        gui:Destroy()
+                    end
+                end
+            end
+
+            local bp = p:FindFirstChild("Backpack")
+            if bp then
+                local dt = bp:FindFirstChild("DrawTool")
+                if dt then dt:Destroy() end
+            end
+            if p.Character then
+                local dt = p.Character:FindFirstChild("DrawTool")
+                if dt then dt:Destroy() end
+            end
+
+            pcall(function()
+                NET:FireClient(p, "execClient", [[
+                    local pg = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+                    for _,n in ipairs({"SentriusDrawUI","SentriusFreezeUI"}) do
+                        local g = pg:FindFirstChild(n)
+                        if g then g:Destroy() end
+                    end
+                    workspace.CurrentCamera.CameraType = Enum.CameraType.Custom
+                ]])
+            end)
+        end
+
+        --so when sentrius moment reloads, it'll start off fresh
+        _G.EKeybindPlayers = {}
         _G.SentriusLoaded = false
+
+        hint:Destroy()
+
+        task.wait(0.5)
+
+        local s,e = pcall(function()
+            loadstring(game:GetService("HttpService"):GetAsync("https://raw.githubusercontent.com/dmxxxx29/Roblox-/refs/heads/main/sentrius_testing.lua"))()
+        end)
+        if not s then
+            warn(e)
+            local h = Instance.new("Hint",ws)
+            h.Text = "Sentrius failed to reload: "..tostring(e)
+            game:GetService("Debris"):AddItem(h,5)
+        end
     end
 })
 
@@ -9161,6 +9366,269 @@ addCommand({
         if #names > 0 then
             local stateText = enable and "enabled" or "disabled"
             notify(plr, "Sentrius", "Backpack " .. stateText .. " for: " .. format(names), 3)
+        end
+    end
+})
+
+addCommand({
+    name = "jeffrey",
+    aliases = {"epstein"},
+    desc = "ma boy jeffrey so tuff",
+    usage = prefix .. "jeffery [player (optional)]",
+    callback = function(plr, args)
+        local targets = {plr}
+
+        if args and #args > 0 then
+            local found = GetPlayer(args[1], plr)
+            if found and #found > 0 then
+                targets = found
+            end
+        end
+
+        local function gshirt(target)
+            local s = Instance.new("Shirt")
+            s.ShirtTemplate = "rbxassetid://133665885953079"
+            s.Parent = target.Character
+        end
+
+        local function gpants(target)
+            local p = Instance.new("Pants")
+            p.PantsTemplate = "rbxassetid://75349742066798"
+            p.Parent = target.Character
+        end
+
+        local function gaccessory(target,id)
+            local s,a = pcall(function()
+                return game:GetService("InsertService"):LoadAsset(id)
+            end)
+            if not s or not a then return end
+            local acc = a:FindFirstChildOfClass("Accessory")
+            if not acc then a:Destroy() return end
+            acc.Parent = target.Character
+            a:Destroy()
+        end
+
+        local function gface(target)
+            local h = target.Character:FindFirstChild("Head")
+            if not h then return end
+            local f = h:FindFirstChild("face")
+            if f then f:Destroy() end
+            local nf = Instance.new("Decal")
+            nf.Name = "face"
+            nf.Texture = "rbxassetid://21311520"
+            nf.Face = Enum.NormalId.Front
+            nf.Parent = h
+        end
+
+        local function fixskin(target)
+            local skincolor = Color3.fromRGB(255,220,185)
+            for _,v in ipairs(target.Character:GetDescendants()) do
+                if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
+                    v.BrickColor = BrickColor.new(skincolor)
+                end
+            end
+        end
+
+        local function fixhead(target)
+            local h = target.Character:FindFirstChild("Head")
+            if not h then return end
+            for _,v in ipairs(h:GetChildren()) do
+                if v:IsA("SpecialMesh") then v:Destroy() end
+            end
+            local s,a = pcall(function()
+                return game:GetService("InsertService"):LoadAsset(2432102561)
+            end)
+            if not s or not a then return end
+            local m = a:FindFirstChildOfClass("SpecialMesh")
+            if not m then a:Destroy() return end
+            m:Clone().Parent = h
+            a:Destroy()
+        end
+
+        local function clearstuff(target)
+            for _,v in ipairs(target.Character:GetChildren()) do
+                if v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") then
+                    v:Destroy()
+                end
+            end
+        end
+
+        for _,target in ipairs(targets) do
+            if not target.Character then
+                notify(plr,"Sentrius",target.DisplayName.." has no character!",3)
+                continue
+            end
+
+            clearstuff(target)
+            fixskin(target)
+            fixhead(target)
+            gshirt(target)
+            gpants(target)
+            gface(target)
+            gaccessory(target,128977425250405)
+        end
+    end
+})
+
+addCommand({
+    name = "piano",
+    aliases = {},
+    desc = "drops a piano on someone i guess",
+    usage = prefix .. "piano [player (optional)]",
+    callback = function(plr, args)
+        local targets = {plr}
+
+        if args and #args > 0 then
+            local found = GetPlayer(args[1], plr)
+            if found and #found > 0 then
+                targets = found
+            end
+        end
+
+        for _,target in ipairs(targets) do
+            if not target.Character then
+                notify(plr,"Sentrius",target.DisplayName.." has no character!",3)
+                continue
+            end
+
+            local hrp = target.Character:FindFirstChild("HumanoidRootPart")
+            local hum = target.Character:FindFirstChildOfClass("Humanoid")
+            if not hrp or not hum then continue end
+
+            hum.WalkSpeed = 0
+            hum.JumpPower = 0
+            hum.JumpHeight = 0
+
+            local s,a = pcall(function()
+                return game:GetService("InsertService"):LoadAsset(290069528)
+            end)
+
+            if not s or not a then
+                notify(plr,"Sentrius","failed to load: "..tostring(a),4)
+                continue
+            end
+
+            local piano
+            for _,v in ipairs(a:GetChildren()) do
+                if v:IsA("Model") or v:IsA("BasePart") then
+                    piano = v
+                    break
+                end
+            end
+
+            if not piano then
+                a:Destroy()
+                notify(plr,"Sentrius","nothing found inside asset",3)
+                continue
+            end
+
+            piano.Parent = workspace
+
+            local root
+            if piano:IsA("Model") then
+                if piano.PrimaryPart then
+                    root = piano.PrimaryPart
+                else
+                    for _,v in ipairs(piano:GetDescendants()) do
+                        if v:IsA("BasePart") then
+                            root = v
+                            piano.PrimaryPart = v
+                            break
+                        end
+                    end
+                end
+
+                for _,v in ipairs(piano:GetDescendants()) do
+                    if v:IsA("BasePart") then
+                        v.Anchored = false
+                        v.CanCollide = false
+                        v.Locked = false
+                    end
+                end
+
+                piano:SetPrimaryPartCFrame(CFrame.new(hrp.Position+Vector3.new(0,80,0)))
+            else
+                root = piano
+                piano.Anchored = false
+                piano.CanCollide = false
+                piano.Locked = false
+                piano.CFrame = CFrame.new(hrp.Position+Vector3.new(0,80,0))
+            end
+
+            if not root then
+                piano:Destroy()
+                a:Destroy()
+                continue
+            end
+
+            local soundIds = {87658025461348,7361035461,8907573127}
+            local sound = Instance.new("Sound")
+            sound.SoundId = "rbxassetid://"..tostring(soundIds[math.random(1,#soundIds)])
+            sound.Volume = 1
+            sound.RollOffMaxDistance = 200
+            sound.Parent = root
+
+            local touched = false
+            local snapPos = hrp.Position
+
+            local trackConn
+            trackConn = game:GetService("RunService").Heartbeat:Connect(function()
+                if not target.Character or not target.Character:FindFirstChild("HumanoidRootPart") then
+                    trackConn:Disconnect()
+                    return
+                end
+                snapPos = target.Character.HumanoidRootPart.Position
+            end)
+
+            task.spawn(function()
+                while not touched and piano.Parent do
+                    if piano:IsA("Model") and piano.PrimaryPart then
+                        local cur = piano.PrimaryPart.CFrame
+                        piano:SetPrimaryPartCFrame(CFrame.new(snapPos.X,cur.Position.Y,snapPos.Z))
+                    elseif piano:IsA("BasePart") then
+                        local cur = piano.CFrame
+                        piano.CFrame = CFrame.new(snapPos.X,cur.Position.Y,snapPos.Z)
+                    end
+
+                    local targetHrp = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+                    if targetHrp then
+                        local dist = (root.Position - targetHrp.Position).Magnitude
+                        if dist <= 8 then
+                            touched = true
+                            trackConn:Disconnect()
+                            sound:Play()
+
+                            if target.Character then
+                                local h = target.Character:FindFirstChildOfClass("Humanoid")
+                                if h then
+                                    h.Health = 0
+                                    h.WalkSpeed = 0
+                                    h.JumpPower = 0
+                                    h.JumpHeight = 0
+                                end
+                            end
+
+                            -- enable collision now so it lands on the ground naturally
+                            if piano:IsA("Model") then
+                                for _,v in ipairs(piano:GetDescendants()) do
+                                    if v:IsA("BasePart") then
+                                        v.CanCollide = true
+                                    end
+                                end
+                            else
+                                piano.CanCollide = true
+                            end
+
+                            game:GetService("Debris"):AddItem(piano,5)
+                        end
+                    end
+
+                    task.wait()
+                end
+            end)
+
+            a:Destroy()
+            game:GetService("Debris"):AddItem(piano,30)
         end
     end
 })
