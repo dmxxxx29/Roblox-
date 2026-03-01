@@ -9385,14 +9385,14 @@ addCommand({
                         piano.CFrame = CFrame.new(snapPos.X,cur.Position.Y,snapPos.Z)
                     end
 
-                    local rootPos = root.Position
                     local targetHrp = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
                     if targetHrp then
-                        local dist = (rootPos - targetHrp.Position).Magnitude
+                        local dist = (root.Position - targetHrp.Position).Magnitude
                         if dist <= 8 then
                             touched = true
                             trackConn:Disconnect()
                             sound:Play()
+
                             if target.Character then
                                 local h = target.Character:FindFirstChildOfClass("Humanoid")
                                 if h then
@@ -9402,6 +9402,18 @@ addCommand({
                                     h.JumpHeight = 0
                                 end
                             end
+
+                            -- enable collision now so it lands on the ground naturally
+                            if piano:IsA("Model") then
+                                for _,v in ipairs(piano:GetDescendants()) do
+                                    if v:IsA("BasePart") then
+                                        v.CanCollide = true
+                                    end
+                                end
+                            else
+                                piano.CanCollide = true
+                            end
+
                             game:GetService("Debris"):AddItem(piano,5)
                         end
                     end
