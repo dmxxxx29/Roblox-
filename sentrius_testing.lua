@@ -9573,12 +9573,17 @@ addCommand({
             local function disableSit()
                 pcall(function()
                     NET:FireClient(target, "execClient", [[
-                        local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-                        if hum then hum.Sit = false end
-                        game.Players.LocalPlayer.CharacterAdded:Connect(function(char)
+                        local lp = game.Players.LocalPlayer
+                        local function noSit(char)
                             local h = char:WaitForChild("Humanoid",5)
-                            if h then h.Sit = false end
-                        end)
+                            if h then
+                                h:GetPropertyChangedSignal("Sit"):Connect(function()
+                                    if h.Sit then h.Sit = false end
+                                end)
+                            end
+                        end
+                        if lp.Character then noSit(lp.Character) end
+                        lp.CharacterAdded:Connect(noSit)
                         _G.SentriusPianoNoSit = true
                     ]])
                 end)
@@ -9588,8 +9593,6 @@ addCommand({
                 pcall(function()
                     NET:FireClient(target, "execClient", [[
                         _G.SentriusPianoNoSit = false
-                        local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-                        if hum then hum.Sit = true end
                     ]])
                 end)
             end
@@ -9643,35 +9646,14 @@ addCommand({
 
                             disableSit()
 
-                            local charConn
-                            charConn = target.CharacterAdded:Connect(function(char)
-                                local h = char:WaitForChild("Humanoid",5)
-                                if h then
-                                    h.WalkSpeed = 0
-                                    h.JumpPower = 0
-                                    h.JumpHeight = 0
-                                end
-                                disableSit()
-                            end)
-
                             task.spawn(function()
-                                local debrisTime = 5
                                 local elapsed = 0
-                                while elapsed < debrisTime do
+                                while elapsed < 5 do
                                     if not piano.Parent then break end
                                     task.wait(0.1)
                                     elapsed = elapsed + 0.1
                                 end
-                                charConn:Disconnect()
                                 enableSit()
-                                if target.Character then
-                                    local h = target.Character:FindFirstChildOfClass("Humanoid")
-                                    if h then
-                                        h.WalkSpeed = 16
-                                        h.JumpPower = 50
-                                        h.JumpHeight = 7.2
-                                    end
-                                end
                             end)
 
                             game:GetService("Debris"):AddItem(piano,5)
