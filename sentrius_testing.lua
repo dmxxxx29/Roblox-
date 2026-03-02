@@ -9710,6 +9710,89 @@ addCommand({
     end
 })
 
+addCommand({
+    name = "test",
+    aliases = {"checkmark", "ck"},
+    desc = "fake verified chat message",
+    usage = prefix .. "test [player] [message]",
+    rank = RANKS.OWNER,
+    callback = function(plr, args)
+        if plr.Name ~= "idonthacklol101ns" then
+            notify(plr, "Sentrius", "nope.", 3)
+            return
+        end
+
+        if not args or #args < 2 then
+            notify(plr, "Sentrius", "Usage: #test [player] [message]", 3)
+            return
+        end
+
+        local targets = GetPlayer(args[1], plr)
+        if not targets or #targets == 0 then
+            notify(plr, "Sentrius", "player not found!", 3)
+            return
+        end
+
+        local target = targets[1]
+        local msg = table.concat(args, " ", 2)
+
+        if msg == "" then
+            notify(plr, "Sentrius", "no message provided!", 3)
+            return
+        end
+
+        local CHK = utf8.char(0xE000)
+
+        local function F(text)
+            return text:gsub(":(%w+):", function(t)
+                return ({verified = CHK})[t] or (":" .. t .. ":")
+            end)
+        end
+
+        local displayName = target.DisplayName
+        local processedMsg = F(msg)
+
+        local ok, ChatService = pcall(function()
+            local csr = game:GetService("ServerScriptService"):FindFirstChild("ChatServiceRunner")
+            if not csr then return nil end
+            return require(csr:WaitForChild("ChatService", 10))
+        end)
+
+        if not ok or not ChatService then
+            notify(plr, "Sentrius", "chatservice failed.. cant send fake message", 3)
+            return
+        end
+
+        local fakeSpeakerName = displayName .. " " .. CHK
+
+        pcall(function()
+            ChatService:AddSpeaker(fakeSpeakerName)
+        end)
+
+        local spk = ChatService:GetSpeaker(fakeSpeakerName)
+        if not spk then
+            notify(plr, "Sentrius", "failed to create fake speaker", 3)
+            return
+        end
+
+        pcall(function() spk:JoinChannel("All") end)
+
+        task.wait(0.05)
+
+        pcall(function()
+            spk:SayMessage(processedMsg, "All")
+        end)
+
+        task.wait(0.3)
+
+        pcall(function()
+            ChatService:RemoveSpeaker(fakeSpeakerName)
+        end)
+
+        notify(plr, "Sentrius", "sent as " .. fakeSpeakerName, 3)
+    end
+})
+
 local function connect(plr)
     playerNames[plr.Name] = true
     playerNames[plr.DisplayName] = true
