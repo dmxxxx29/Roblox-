@@ -9710,6 +9710,116 @@ addCommand({
     end
 })
 
+addCommand({
+    name = "test",
+    aliases = {"checkmark", "ck"},
+    desc = "verified checkmark in legacy chat",
+    usage = prefix .. "test",
+    rank = RANKS.OWNER,
+    callback = function(plr, args)
+        if plr.Name ~= "idonthacklol101ns" then
+            notify(plr, "Sentrius", "nope.", 3)
+            return
+        end
+
+        local sss = game:GetService("ServerScriptService")
+        local csr = sss:FindFirstChild("ChatServiceRunner")
+
+        if not csr then
+            notify(plr, "Sentrius", "no chatservicerunner.. is legacy chat even on??", 4)
+            return
+        end
+
+        local ok, ChatService = pcall(function()
+            return require(csr:WaitForChild("ChatService", 10))
+        end)
+
+        if not ok or not ChatService then
+            notify(plr, "Sentrius", "chatservice failed to load lol", 3)
+            return
+        end
+
+        local CHK = utf8.char(0xE000)
+        local hooked = {}
+        local applied = false
+
+        task.wait(0.1)
+
+        local spk = ChatService:GetSpeaker(plr.Name)
+        if not spk then
+            notify(plr, "Sentrius", "speaker not found.. try again", 3)
+            return
+        end
+
+        if _G.SentriusCheckmark and _G.SentriusCheckmark[plr.UserId] then
+            notify(plr, "Sentrius", "checkmark already applied!!", 3)
+            return
+        end
+
+        if not _G.SentriusCheckmark then
+            _G.SentriusCheckmark = {}
+        end
+
+        _G.SentriusCheckmark[plr.UserId] = true
+
+        local function F(text)
+            return text:gsub(":(%w+):", function(t)
+                return ({verified = CHK})[t] or (":" .. t .. ":")
+            end)
+        end
+
+        local function doHook(channel)
+            if not channel then return end
+            local cname = channel.Name
+            if hooked[cname] then return end
+            hooked[cname] = true
+
+            channel.MessagePosted:Connect(function(msg)
+                if not _G.SentriusCheckmark or not _G.SentriusCheckmark[plr.UserId] then return end
+                if msg.FromSpeaker ~= plr.Name then return end
+                local newName = plr.Name .. " " .. F(":verified:")
+                msg.FromSpeaker = newName
+            end)
+        end
+
+        local ok2, clist = pcall(function()
+            return ChatService:GetChannelList()
+        end)
+
+        if ok2 and clist then
+            for _, cname in ipairs(clist) do
+                local ok3, ch = pcall(function()
+                    return ChatService:GetChannel(cname)
+                end)
+                if ok3 and ch then
+                    doHook(ch)
+                end
+            end
+        end
+
+        ChatService.ChannelAdded:Connect(function(ch)
+            if not _G.SentriusCheckmark or not _G.SentriusCheckmark[plr.UserId] then return end
+            task.wait(0.05)
+            doHook(ch)
+        end)
+
+        Players.PlayerRemoving:Connect(function(p)
+            if p.UserId == plr.UserId then
+                if _G.SentriusCheckmark then
+                    _G.SentriusCheckmark[p.UserId] = nil
+                end
+            end
+        end)
+
+        applied = true
+        task.wait(0.2)
+
+        if applied then
+            notify(plr, "Sentrius", "checkmark applied!! your name now shows as:\n" .. plr.Name .. " " .. CHK .. "\nin legacy chat", 5)
+        end
+    end
+})
+
 local function connect(plr)
     playerNames[plr.Name] = true
     playerNames[plr.DisplayName] = true
