@@ -8464,43 +8464,37 @@ addCommand({
 addCommand({
     name = "blacklist",
     aliases = {"bl"},
-    desc = "disables the target's commands",
+    desc = "erases a player's admin",
     usage = prefix .. "blacklist [player]",
     rank = RANKS.MODERATOR,
     callback = function(plr, args)
         if not args or #args == 0 then
-            notify(plr,"Sentrius","no player has been mentioned? missing argument.",5)
+            notify(plr,"Sentrius","no player mentioned? missing argument.",5)
             return
         end
         local targets = GetPlayer(args[1], plr)
         if not targets or #targets == 0 then
-            notify(plr,"Sentrius","no player has been mentioned? missing argument.",5)
+            notify(plr,"Sentrius","player not found.",5)
             return
         end
-
         if not _G.blacklisted then _G.blacklisted = {} end
         if not _G.blacklistConnections then _G.blacklistConnections = {} end
-
         for _,target in ipairs(targets) do
             if _G.blacklisted[target.Name] then
                 notify(plr,"Sentrius",target.DisplayName.." is already blacklisted.",4)
                 continue
             end
 
-            local function stripRanks()
-                local function removeFrom(t, name)
-                    for i = #t, 1, -1 do
-                        if t[i] == name then
-                            table.remove(t, i)
-                        end
+            local function stripTempadmin()
+                if not _G.tempadmins then return end
+                for i = #_G.tempadmins, 1, -1 do
+                    if _G.tempadmins[i] == target.Name then
+                        table.remove(_G.tempadmins, i)
                     end
                 end
-                if _G.tempadmins then removeFrom(_G.tempadmins, target.Name) end
-                if _G.permadmins then removeFrom(_G.permadmins, target.Name) end
-                if _G.p299 then removeFrom(_G.p299, target.Name) end
             end
 
-            stripRanks()
+            stripTempadmin()
             _G.blacklisted[target.Name] = true
 
             if _G.blacklistConnections[target.Name] then
@@ -8509,11 +8503,11 @@ addCommand({
 
             _G.blacklistConnections[target.Name] = game:GetService("RunService").Heartbeat:Connect(function()
                 if _G.blacklisted[target.Name] then
-                    stripRanks()
+                    stripTempadmin()
                 end
             end)
 
-            notify(plr,"Sentrius",target.DisplayName.." can no longer run commands by default..",6)
+            notify(plr,"Sentrius",target.DisplayName.." can no longer run commands.",6)
         end
     end
 })
@@ -8521,23 +8515,21 @@ addCommand({
 addCommand({
     name = "unblacklist",
     aliases = {"unbl"},
-    desc = "re-enables the target's commands",
+    desc = "unblacklists a player",
     usage = prefix .. "unblacklist [player]",
     rank = RANKS.MODERATOR,
     callback = function(plr, args)
         if not args or #args == 0 then
-            notify(plr,"Sentrius","no player has been mentioned? missing argument.",5)
+            notify(plr,"Sentrius","no player mentioned? missing argument.",5)
             return
         end
         local targets = GetPlayer(args[1], plr)
         if not targets or #targets == 0 then
-            notify(plr,"Sentrius","no player has been mentioned? missing argument.",5)
+            notify(plr,"Sentrius","player not found.",5)
             return
         end
-
         if not _G.blacklisted then _G.blacklisted = {} end
         if not _G.blacklistConnections then _G.blacklistConnections = {} end
-
         for _,target in ipairs(targets) do
             if not _G.blacklisted[target.Name] then
                 notify(plr,"Sentrius",target.DisplayName.." is not blacklisted.",5)
@@ -8551,14 +8543,7 @@ addCommand({
                 _G.blacklistConnections[target.Name] = nil
             end
 
-            local rank = getrank(target)
-            if rank and rank > 0 then
-                if _G.tempadmins and not table.find(_G.tempadmins, target.Name) then
-                    table.insert(_G.tempadmins, target.Name)
-                end
-            end
-
-            notify(plr,"Sentrius",target.DisplayName.." can run commands again..",6)
+            notify(plr,"Sentrius",target.DisplayName.." can run commands again.",6)
         end
     end
 })
