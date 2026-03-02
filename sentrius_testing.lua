@@ -8541,10 +8541,9 @@ addCommand({
             if _G.blacklistConnections[target.Name] then
                 _G.blacklistConnections[target.Name]:Disconnect()
                 _G.blacklistConnections[target.Name] = nil
+                task.wait()
+                table.insert(_G.tempadmins, target.Name)
             end
-
-            task.wait()
-             table.insert(_G.tempadmins, target.Name)
 
             notify(plr,"Sentrius",target.DisplayName.." can run commands again.",6)
         end
