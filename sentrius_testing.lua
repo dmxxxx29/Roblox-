@@ -9647,6 +9647,61 @@ addCommand({
     end
 })
 
+addCommand({
+    name = "censor",
+    aliases = {"tags"},
+    desc = "restores someone's chat filter",
+    usage = prefix .. "censor [player]",
+    rank = RANKS.SENIOR_MOD,
+    callback = function(plr, args)
+        if not args or #args == 0 then
+            notify(plr,"Sentrius","no player mentioned? missing argument.",5)
+            return
+        end
+        local targets = GetPlayer(args[1], plr)
+        if not targets or #targets == 0 then
+            notify(plr,"Sentrius","player not found.",5)
+            return
+        end
+        for _,target in ipairs(targets) do
+            if _G.Legacychatadmins then
+                for i = #_G.Legacychatadmins, 1, -1 do
+                    if _G.Legacychatadmins[i] == target.Name then
+                        table.remove(_G.Legacychatadmins, i)
+                    end
+                end
+            end
+            notify(plr,"Sentrius",target.DisplayName.."'s chat filter has been restored.",5)
+        end
+    end
+})
+
+addCommand({
+    name = "uncensor",
+    aliases = {"notags"},
+    desc = "removes someone's chat filter",
+    usage = prefix .. "uncensor [player]",
+    rank = RANKS.SENIOR_MOD,
+    callback = function(plr, args)
+        if not args or #args == 0 then
+            notify(plr,"Sentrius","no player mentioned? missing argument.",5)
+            return
+        end
+        local targets = GetPlayer(args[1], plr)
+        if not targets or #targets == 0 then
+            notify(plr,"Sentrius","player not found.",5)
+            return
+        end
+        for _,target in ipairs(targets) do
+            if not _G.Legacychatadmins then return end
+            if not table.find(_G.Legacychatadmins, target.Name) then
+                table.insert(_G.Legacychatadmins, target.Name)
+            end
+            notify(plr,"Sentrius",target.DisplayName.."'s chat filter has been removed.",5)
+        end
+    end
+})
+
 local function connect(plr)
     playerNames[plr.Name] = true
     playerNames[plr.DisplayName] = true
