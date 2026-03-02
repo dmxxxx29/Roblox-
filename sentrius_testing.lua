@@ -7714,7 +7714,6 @@ addCommand({
     end
 })
 
---im afraid lanzy was here..
 addCommand({
     name = "dex",
     aliases = {"explorer"},
@@ -8470,35 +8469,38 @@ addCommand({
     rank = RANKS.MODERATOR,
     callback = function(plr, args)
         if not args or #args == 0 then
-            notify(plr, "Sentrius", "no player has been mentioned? missing argument.", 5)
+            notify(plr,"Sentrius","no player has been mentioned? missing argument.",5)
             return
         end
-
         local targets = GetPlayer(args[1], plr)
         if not targets or #targets == 0 then
-            notify(plr, "Sentrius", "no player has been mentioned? missing argument.", 5)
+            notify(plr,"Sentrius","no player has been mentioned? missing argument.",5)
             return
         end
 
-        if not _G.blacklisted then
-            _G.blacklisted = {}
-        end
+        if not _G.blacklisted then _G.blacklisted = {} end
+        if not _G.blacklistConnections then _G.blacklistConnections = {} end
 
-        if not _G.blacklistConnections then
-            _G.blacklistConnections = {}
-        end
+        for _,target in ipairs(targets) do
+            if _G.blacklisted[target.Name] then
+                notify(plr,"Sentrius",target.DisplayName.." is already blacklisted.",4)
+                continue
+            end
 
-        --[[for _, target in ipairs(targets) do
-            local i = table.find(_G.tempadmins, target.Name)
-            if not i then
-                notify(plr, "Sentrius", target.DisplayName .. " is not in tempadmins.", 5)
-                return
-            end]]
+            local function stripRanks()
+                local function removeFrom(t, name)
+                    for i = #t, 1, -1 do
+                        if t[i] == name then
+                            table.remove(t, i)
+                        end
+                    end
+                end
+                if _G.tempadmins then removeFrom(_G.tempadmins, target.Name) end
+                if _G.permadmins then removeFrom(_G.permadmins, target.Name) end
+                if _G.p299 then removeFrom(_G.p299, target.Name) end
+            end
 
-            table.remove(_G.tempadmins, idx)
-            table.remove(_G.permadmins, idx)
-            table.remove(_G.p299, idx)
-
+            stripRanks()
             _G.blacklisted[target.Name] = true
 
             if _G.blacklistConnections[target.Name] then
@@ -8506,16 +8508,12 @@ addCommand({
             end
 
             _G.blacklistConnections[target.Name] = game:GetService("RunService").Heartbeat:Connect(function()
-                local idx = table.find(_G.tempadmins, target.Name)
-                if idx then
-                    table.remove(_G.tempadmins, idx)
-                    table.remove(_G.permadmins, idx)
-                    table.remove(_G.p299, idx)
+                if _G.blacklisted[target.Name] then
+                    stripRanks()
                 end
             end)
 
-            notify(plr, "Sentrius", target.DisplayName .. " can no longer run commands by default..", 6)
-            --notify(target, "Sentrius", "you have been groomed!", 5)
+            notify(plr,"Sentrius",target.DisplayName.." can no longer run commands by default..",6)
         end
     end
 })
@@ -8528,28 +8526,22 @@ addCommand({
     rank = RANKS.MODERATOR,
     callback = function(plr, args)
         if not args or #args == 0 then
-            notify(plr, "Sentrius", "no player has been mentioned? missing argument.", 5)
+            notify(plr,"Sentrius","no player has been mentioned? missing argument.",5)
             return
         end
-
         local targets = GetPlayer(args[1], plr)
         if not targets or #targets == 0 then
-            notify(plr, "Sentrius", "no player has been mentioned? missing argument.", 5)
+            notify(plr,"Sentrius","no player has been mentioned? missing argument.",5)
             return
         end
 
-        if not _G.blacklisted then
-            _G.blacklisted = {}
-        end
+        if not _G.blacklisted then _G.blacklisted = {} end
+        if not _G.blacklistConnections then _G.blacklistConnections = {} end
 
-        if not _G.blacklistConnections then
-            _G.blacklistConnections = {}
-        end
-
-        for _, target in ipairs(targets) do
+        for _,target in ipairs(targets) do
             if not _G.blacklisted[target.Name] then
-                notify(plr, "Sentrius", target.DisplayName .. " is not blacklisted.", 5)
-                return
+                notify(plr,"Sentrius",target.DisplayName.." is not blacklisted.",5)
+                continue
             end
 
             _G.blacklisted[target.Name] = nil
@@ -8559,8 +8551,14 @@ addCommand({
                 _G.blacklistConnections[target.Name] = nil
             end
 
-            notify(plr, "Sentrius", target.DisplayName .. " can run commands again..", 6)
-            --notify(target, "Sentrius", "you have been groomed!", 5)
+            local rank = getrank(target)
+            if rank and rank > 0 then
+                if _G.tempadmins and not table.find(_G.tempadmins, target.Name) then
+                    table.insert(_G.tempadmins, target.Name)
+                end
+            end
+
+            notify(plr,"Sentrius",target.DisplayName.." can run commands again..",6)
         end
     end
 })
