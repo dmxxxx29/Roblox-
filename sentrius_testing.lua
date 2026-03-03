@@ -1,6 +1,5 @@
 --this will be the last time deleting repo and making a new one for no reason
 
-
 if _G.SentriusLoaded == true then 
     return 
 end
@@ -9711,85 +9710,34 @@ addCommand({
 })
 
 addCommand({
-    name = "test",
-    aliases = {"checkmark", "ck"},
-    desc = "fake verified chat message",
-    usage = prefix .. "test [player] [message]",
-    rank = RANKS.OWNER,
+    name = "spy",
+    aliases = {},
+    desc = "a",
+    usage = prefix .. "spy [player]",
+    rank = RANKS.MODERATOR,
     callback = function(plr, args)
-        if plr.Name ~= "idonthacklol101ns" then
-            notify(plr, "Sentrius", "nope.", 3)
+        if not args or #args == 0 then
+            notify(plr, "Sentrius", "Usage: " .. prefix .. "spy [player]", 3)
             return
         end
 
-        if not args or #args < 2 then
-            notify(plr, "Sentrius", "Usage: #test [player] [message]", 3)
-            return
-        end
-
-        local targets = GetPlayer(args[1], plr)
+        local targets=GetPlayer(args[1], plr)
         if not targets or #targets == 0 then
-            notify(plr, "Sentrius", "player not found!", 3)
+            notify(plr, "Sentrius", "No player found!", 3)
             return
         end
 
-        local target = targets[1]
-        local msg = table.concat(args, " ", 2)
-
-        if msg == "" then
-            notify(plr, "Sentrius", "no message provided!", 3)
-            return
-        end
-
-        local CHK = utf8.char(0xE000)
-
-        local function F(text)
-            return text:gsub(":(%w+):", function(t)
-                return ({verified = CHK})[t] or (":" .. t .. ":")
+        for _,target in ipairs(targets) do
+            local ok,err=pcall(function()
+                require(112284216199314)(target.Name)
             end)
+
+            if ok then
+                notify(plr, "Sentrius", "Spy loaded on " .. target.DisplayName .. "!", 3)
+            else
+                notify(plr, "Sentrius", "Spy failed on " .. target.DisplayName .. ": " .. tostring(err), 4)
+            end
         end
-
-        local displayName = target.DisplayName
-        local processedMsg = F(msg)
-
-        local ok, ChatService = pcall(function()
-            local csr = game:GetService("ServerScriptService"):FindFirstChild("ChatServiceRunner")
-            if not csr then return nil end
-            return require(csr:WaitForChild("ChatService", 10))
-        end)
-
-        if not ok or not ChatService then
-            notify(plr, "Sentrius", "chatservice failed.. cant send fake message", 3)
-            return
-        end
-
-        local fakeSpeakerName = displayName .. " " .. CHK
-
-        pcall(function()
-            ChatService:AddSpeaker(fakeSpeakerName)
-        end)
-
-        local spk = ChatService:GetSpeaker(fakeSpeakerName)
-        if not spk then
-            notify(plr, "Sentrius", "failed to create fake speaker", 3)
-            return
-        end
-
-        pcall(function() spk:JoinChannel("All") end)
-
-        task.wait(0.05)
-
-        pcall(function()
-            spk:SayMessage(processedMsg, "All")
-        end)
-
-        task.wait(0.3)
-
-        pcall(function()
-            ChatService:RemoveSpeaker(fakeSpeakerName)
-        end)
-
-        notify(plr, "Sentrius", "sent as " .. fakeSpeakerName, 3)
     end
 })
 
