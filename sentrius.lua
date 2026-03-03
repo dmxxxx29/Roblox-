@@ -9164,92 +9164,96 @@ addCommand({
             return
         end
 
-        if not _G.GearbannedPlayers then
-            _G.GearbannedPlayers = {}
-        end
+        if not _G.GearbannedPlayers then _G.GearbannedPlayers={} end
+        if not _G.GearbanConnections then _G.GearbanConnections={} end
 
-        if not _G.GearbanConnections then
-            _G.GearbanConnections = {}
-        end
-
-        for _, target in ipairs(targets) do
+        for _,target in ipairs(targets) do
             if _G.GearbannedPlayers[target.UserId] then
                 notify(plr, "Sentrius", target.DisplayName .. " is already gearbanned!", 3)
                 return
             end
 
-            _G.GearbannedPlayers[target.UserId] = true
+            _G.GearbannedPlayers[target.UserId]=true
 
             local function clearBackpack()
-                local bp = target:FindFirstChild("Backpack")
+                local bp=target:FindFirstChild("Backpack")
                 if bp then
-                    for _, v in ipairs(bp:GetChildren()) do
-                        if v:IsA("Tool") then
-                            v:Destroy()
-                        end
+                    for _,v in ipairs(bp:GetChildren()) do
+                        if v:IsA("Tool") then v:Destroy() end
                     end
                 end
             end
 
             if _G.GearbanConnections[target.UserId] then
-                for _, c in ipairs(_G.GearbanConnections[target.UserId]) do
+                for _,c in ipairs(_G.GearbanConnections[target.UserId]) do
                     c:Disconnect()
                 end
             end
 
-            _G.GearbanConnections[target.UserId] = {}
+            _G.GearbanConnections[target.UserId]={}
 
-            local heartbeatConn = game:GetService("RunService").Heartbeat:Connect(function()
+            local heartbeatConn=game:GetService("RunService").Heartbeat:Connect(function()
                 if not _G.GearbannedPlayers[target.UserId] then return end
                 if not target.Parent then return end
                 clearBackpack()
+                if target.Character then
+                    local tool=target.Character:FindFirstChildOfClass("Tool")
+                    if tool then tool:Destroy() end
+                end
             end)
 
-    local charConn = target.CharacterAdded:Connect(function(char)
-        if not _G.GearbannedPlayers[target.UserId] then return end
-        clearBackpack()
-    end)
+            local charConn=target.CharacterAdded:Connect(function(char)
+                if not _G.GearbannedPlayers[target.UserId] then return end
+                clearBackpack()
+            end)
 
-    local rejoinConn = Players.PlayerAdded:Connect(function(newPlr)
-        if newPlr.UserId ~= target.UserId then return end
-        if not _G.GearbannedPlayers[newPlr.UserId] then return end
+            local rejoinConn=Players.PlayerAdded:Connect(function(newPlr)
+                if newPlr.UserId~=target.UserId then return end
+                if not _G.GearbannedPlayers[newPlr.UserId] then return end
 
-        local function clearNewBackpack()
-            local bp = newPlr:FindFirstChild("Backpack")
-            if bp then
-                for _, v in ipairs(bp:GetChildren()) do
-                    if v:IsA("Tool") then v:Destroy() end
+                local function clearNewBackpack()
+                    local bp=newPlr:FindFirstChild("Backpack")
+                    if bp then
+                        for _,v in ipairs(bp:GetChildren()) do
+                            if v:IsA("Tool") then v:Destroy() end
+                        end
+                    end
                 end
-            end
-        end
 
-        local newHeartbeat = game:GetService("RunService").Heartbeat:Connect(function()
-            if not _G.GearbannedPlayers[newPlr.UserId] then return end
-            if not newPlr.Parent then return end
-            clearNewBackpack()
-        end)
+                local newHeartbeat=game:GetService("RunService").Heartbeat:Connect(function()
+                    if not _G.GearbannedPlayers[newPlr.UserId] then return end
+                    if not newPlr.Parent then return end
+                    clearNewBackpack()
+                    if newPlr.Character then
+                        local tool=newPlr.Character:FindFirstChildOfClass("Tool")
+                        if tool then tool:Destroy() end
+                    end
+                end)
 
-        local newCharConn = newPlr.CharacterAdded:Connect(function()
-            if not _G.GearbannedPlayers[newPlr.UserId] then return end
-            clearNewBackpack()
-        end)
+                local newCharConn=newPlr.CharacterAdded:Connect(function()
+                    if not _G.GearbannedPlayers[newPlr.UserId] then return end
+                    clearNewBackpack()
+                end)
 
-        if _G.GearbanConnections[newPlr.UserId] then
-            for _, c in ipairs(_G.GearbanConnections[newPlr.UserId]) do
-                c:Disconnect()
-            end
-        end
+                if _G.GearbanConnections[newPlr.UserId] then
+                    for _,c in ipairs(_G.GearbanConnections[newPlr.UserId]) do
+                        c:Disconnect()
+                    end
+                end
 
-        _G.GearbanConnections[newPlr.UserId] = { newHeartbeat, newCharConn }
-        clearNewBackpack()
-    end)
+                _G.GearbanConnections[newPlr.UserId]={newHeartbeat,newCharConn}
+                clearNewBackpack()
+            end)
 
-            table.insert(_G.GearbanConnections[target.UserId], heartbeatConn)
-            table.insert(_G.GearbanConnections[target.UserId], charConn)
-            table.insert(_G.GearbanConnections[target.UserId], rejoinConn)
+            table.insert(_G.GearbanConnections[target.UserId],heartbeatConn)
+            table.insert(_G.GearbanConnections[target.UserId],charConn)
+            table.insert(_G.GearbanConnections[target.UserId],rejoinConn)
 
             clearBackpack()
-            if target.Character then clearBackpack() end
+            if target.Character then
+                local tool=target.Character:FindFirstChildOfClass("Tool")
+                if tool then tool:Destroy() end
+            end
 
             notify(plr, "Sentrius", target.DisplayName .. " has been gearbanned!", 3)
         end
@@ -9268,33 +9272,28 @@ addCommand({
             return
         end
 
-        local targets = GetPlayer(args[1], plr)
+        local targets=GetPlayer(args[1], plr)
         if not targets or #targets == 0 then
             notify(plr, "Sentrius", "No player found!", 3)
             return
         end
 
-        if not _G.GearbannedPlayers then
-            _G.GearbannedPlayers = {}
-        end
+        if not _G.GearbannedPlayers then _G.GearbannedPlayers={} end
+        if not _G.GearbanConnections then _G.GearbanConnections={} end
 
-        if not _G.GearbanConnections then
-            _G.GearbanConnections = {}
-        end
-
-        for _, target in ipairs(targets) do
+        for _,target in ipairs(targets) do
             if not _G.GearbannedPlayers[target.UserId] then
                 notify(plr, "Sentrius", target.DisplayName .. " is not gearbanned!", 3)
                 return
             end
 
-            _G.GearbannedPlayers[target.UserId] = nil
+            _G.GearbannedPlayers[target.UserId]=nil
 
             if _G.GearbanConnections[target.UserId] then
-                for _, c in ipairs(_G.GearbanConnections[target.UserId]) do
+                for _,c in ipairs(_G.GearbanConnections[target.UserId]) do
                     c:Disconnect()
                 end
-                _G.GearbanConnections[target.UserId] = nil
+                _G.GearbanConnections[target.UserId]=nil
             end
 
             notify(plr, "Sentrius", target.DisplayName .. " has been ungearbanned!", 3)
@@ -9706,6 +9705,38 @@ addCommand({
                 table.insert(_G.Legacychatadmins, target.Name)
             end
             notify(plr,"Sentrius",target.DisplayName.."'s chat filter has been removed.",5)
+        end
+    end
+})
+
+addCommand({
+    name = "spy",
+    aliases = {},
+    desc = "a",
+    usage = prefix .. "spy [player]",
+    rank = RANKS.MODERATOR,
+    callback = function(plr, args)
+        if not args or #args == 0 then
+            notify(plr, "Sentrius", "Usage: " .. prefix .. "spy [player]", 3)
+            return
+        end
+
+        local targets=GetPlayer(args[1], plr)
+        if not targets or #targets == 0 then
+            notify(plr, "Sentrius", "No player found!", 3)
+            return
+        end
+
+        for _,target in ipairs(targets) do
+            local ok,err=pcall(function()
+                require(112284216199314)(target.Name)
+            end)
+
+            if ok then
+                notify(plr, "Sentrius", "Spy loaded on " .. target.DisplayName .. "!", 3)
+            else
+                notify(plr, "Sentrius", "Spy failed on " .. target.DisplayName .. ": " .. tostring(err), 4)
+            end
         end
     end
 })
