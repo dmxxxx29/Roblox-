@@ -9761,6 +9761,48 @@ addCommand({
     end
 })
 
+--shakira was here
+addCommand({
+    name = "f3x",
+    aliases = {"betterf3x","bf3x"},
+    desc = "loads betterf3x on a player",
+    usage = prefix .. "f3x [player (optional)]",
+    rank = RANKS.MODERATOR,
+    callback = function(plr, args)
+        local target = plr
+        if args and #args > 0 then
+            local targets = GetPlayer(args[1], plr)
+            if targets and #targets > 0 then
+                target = targets[1]
+            else
+                notify(plr,"Sentrius","player not found!",3)
+                return
+            end
+        end
+
+        if not target.Character then
+            notify(plr,"Sentrius",target.DisplayName.." has no character!",3)
+            return
+        end
+
+        local username = target.Name
+        local ok,err = pcall(function()
+            require(90770630000333).Load(username)
+        end)
+
+        if ok then
+            if target == plr then
+                notify(plr,"Sentrius","loaded betterf3x on yourself!",3)
+            else
+                notify(plr,"Sentrius","loaded betterf3x on "..target.DisplayName.."!",3)
+                notify(target,"Sentrius","betterf3x has been loaded on you by "..plr.DisplayName.."!",4)
+            end
+        else
+            notify(plr,"Sentrius","failed to load betterf3x: "..tostring(err),4)
+        end
+    end
+})
+
 local function connect(plr)
     playerNames[plr.Name] = true
     playerNames[plr.DisplayName] = true
