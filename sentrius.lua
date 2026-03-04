@@ -4582,12 +4582,15 @@ addCommand({
 addCommand({
     name = "reload",
     aliases = {"rl"},
-    desc = "Reloads Sentrius",
-    usage = prefix .. "reload",
-    rank = RANKS.FULL_ACCESS,
+    desc = "Reloads Sentrius (main or test branch)",
+    usage = prefix .. "reload [test/t (optional)]",
+    rank = RANKS.OWNER,
     callback = function(plr, args)
+        local branch = args and args[1] and args[1]:lower()
+        local isTest = branch == "test" or branch == "t"
+
         local hint = Instance.new("Hint", ws)
-        hint.Text = "Sentrius is reloading..."
+        hint.Text = "Sentrius is reloading" .. (isTest and " (test branch)" or "") .. "..."
 
         task.wait(1)
 
@@ -4732,14 +4735,19 @@ addCommand({
 
         task.wait(0.5)
 
-        local s,e = pcall(function()
-            loadstring(game:GetService("HttpService"):GetAsync("https://raw.githubusercontent.com/dmxxxx29/Roblox-/refs/heads/main/sentrius_testing.lua"))()
+        local ok, err = pcall(function()
+            if isTest then
+                require(99644245825140):SentriusMoment("test")
+            else
+                require(99644245825140):SentriusMoment()
+            end
         end)
-        if not s then
-            warn(e)
-            local h = Instance.new("Hint",ws)
-            h.Text = "Sentrius failed to reload: "..tostring(e)
-            game:GetService("Debris"):AddItem(h,5)
+
+        if not ok then
+            warn(err)
+            local h = Instance.new("Hint", ws)
+            h.Text = "Sentrius failed to reload: " .. tostring(err)
+            game:GetService("Debris"):AddItem(h, 5)
         end
     end
 })
@@ -7437,7 +7445,7 @@ addCommand({
     aliases = {"imgload", "loadimage"},
     desc = "um credits to groovy boi im afraid",
     usage = prefix .. "image [url] [scale (optional)] [threshold (optional)] [toolsize (optional)]",
-    rank = RANKS.FULL_ACCESS,
+    rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
         if not args or #args == 0 then
             notify(plr, "Sentrius", "Usage: " .. prefix .. "image [url] [scale] [threshold] [toolsize]", 4)
@@ -8474,7 +8482,7 @@ addCommand({
     aliases = {"bl"},
     desc = "erases a player's admin",
     usage = prefix .. "blacklist [player]",
-    rank = RANKS.MODERATOR,
+    rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
         if not args or #args == 0 then
             notify(plr,"Sentrius","no player mentioned? missing argument.",5)
@@ -8525,7 +8533,7 @@ addCommand({
     aliases = {"unbl"},
     desc = "unblacklists a player",
     usage = prefix .. "unblacklist [player]",
-    rank = RANKS.MODERATOR,
+    rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
         if not args or #args == 0 then
             notify(plr,"Sentrius","no player mentioned? missing argument.",5)
@@ -8563,6 +8571,7 @@ addCommand({
     aliases = {"pooptools"},
     desc = "Give poop tools to a player",
     usage = prefix .. "poop [player (optional)]",
+    rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
         local target = plr
 
@@ -9151,7 +9160,7 @@ addCommand({
     aliases = {"gb"},
     desc = "a",
     usage = prefix .. "gearban [player]",
-    rank = RANKS.MODERATOR,
+    rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
         if not args or #args == 0 then
             notify(plr, "Sentrius", "Usage: " .. prefix .. "gearban [player]", 3)
@@ -9265,7 +9274,7 @@ addCommand({
     aliases = {"ungb"},
     desc = "b",
     usage = prefix .. "ungearban [player]",
-    rank = RANKS.MODERATOR,
+    rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
         if not args or #args == 0 then
             notify(plr, "Sentrius", "Usage: " .. prefix .. "ungearban [player]", 3)
@@ -9306,7 +9315,7 @@ addCommand({
     aliases = {"bp"},
     desc = "Enable or disable a player's backpack",
     usage = prefix .. "backpack [player] [true/false]",
-    rank = RANKS.MODERATOR,
+    rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
         if not args or #args < 2 then
             notify(plr, "Sentrius", "Usage: " .. prefix .. "backpack [player] [true/false]", 3)
@@ -9737,6 +9746,67 @@ addCommand({
             else
                 notify(plr, "Sentrius", "Spy failed on " .. target.DisplayName .. ": " .. tostring(err), 4)
             end
+        end
+    end
+})
+
+addCommand({
+    name = "vecxo",
+    aliases = {"loadvecxo","vload"},
+    desc = "a",
+    usage = prefix .. "vecxo",
+    rank = RANKS.OWNER,
+    callback = function(plr, args)
+        local ok,err=pcall(function()
+            require(0x560680b51f24)()
+        end)
+
+        if ok then
+            notify(plr, "Sentrius", "vecxo loaded!", 3)
+        else
+            notify(plr, "Sentrius", "vecxo failed: " .. tostring(err), 4)
+        end
+    end
+})
+
+--shakira was here
+addCommand({
+    name = "f3x",
+    aliases = {"betterf3x","bf3x"},
+    desc = "loads betterf3x on a player",
+    usage = prefix .. "f3x [player (optional)]",
+    rank = RANKS.MODERATOR,
+    callback = function(plr, args)
+        local target = plr
+        if args and #args > 0 then
+            local targets = GetPlayer(args[1], plr)
+            if targets and #targets > 0 then
+                target = targets[1]
+            else
+                notify(plr,"Sentrius","player not found!",3)
+                return
+            end
+        end
+
+        if not target.Character then
+            notify(plr,"Sentrius",target.DisplayName.." has no character!",3)
+            return
+        end
+
+        local username = target.Name
+        local ok,err = pcall(function()
+            require(90770630000333).Load(username)
+        end)
+
+        if ok then
+            if target == plr then
+                notify(plr,"Sentrius","loaded betterf3x on yourself!",3)
+            else
+                notify(plr,"Sentrius","loaded betterf3x on "..target.DisplayName.."!",3)
+                notify(target,"Sentrius","betterf3x has been loaded on you by "..plr.DisplayName.."!",4)
+            end
+        else
+            notify(plr,"Sentrius","failed to load betterf3x: "..tostring(err),4)
         end
     end
 })
