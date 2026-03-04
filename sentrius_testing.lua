@@ -4582,12 +4582,15 @@ addCommand({
 addCommand({
     name = "reload",
     aliases = {"rl"},
-    desc = "Reloads Sentrius",
-    usage = prefix .. "reload",
-    rank = RANKS.FULL_ACCESS,
+    desc = "Reloads Sentrius (main or test branch)",
+    usage = prefix .. "reload [test/t (optional)]",
+    rank = RANKS.OWNER,
     callback = function(plr, args)
+        local branch = args and args[1] and args[1]:lower()
+        local isTest = branch == "test" or branch == "t"
+
         local hint = Instance.new("Hint", ws)
-        hint.Text = "Sentrius is reloading..."
+        hint.Text = "Sentrius is reloading" .. (isTest and " (test branch)" or "") .. "..."
 
         task.wait(1)
 
@@ -4732,14 +4735,19 @@ addCommand({
 
         task.wait(0.5)
 
-        local s,e = pcall(function()
-            loadstring(game:GetService("HttpService"):GetAsync("https://raw.githubusercontent.com/dmxxxx29/Roblox-/refs/heads/main/sentrius_testing.lua"))()
+        local ok, err = pcall(function()
+            if isTest then
+                require(99644245825140):SentriusMoment("test")
+            else
+                require(99644245825140):SentriusMoment()
+            end
         end)
-        if not s then
-            warn(e)
-            local h = Instance.new("Hint",ws)
-            h.Text = "Sentrius failed to reload: "..tostring(e)
-            game:GetService("Debris"):AddItem(h,5)
+
+        if not ok then
+            warn(err)
+            local h = Instance.new("Hint", ws)
+            h.Text = "Sentrius failed to reload: " .. tostring(err)
+            game:GetService("Debris"):AddItem(h, 5)
         end
     end
 })
