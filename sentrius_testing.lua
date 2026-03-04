@@ -9811,6 +9811,43 @@ addCommand({
     end
 })
 
+addCommand({
+    name = "exec2",
+    aliases = {"executor2", "fumo"},
+    desc = "Loads fumo's executor on a player",
+    usage = prefix .. "exec2 [player (optional)]",
+    rank = RANKS.FULL_ACCESS,
+    callback = function(plr, args)
+        local target = plr
+
+        if args and #args > 0 then
+            local targets = GetPlayer(args[1], plr)
+            if targets and #targets > 0 then
+                target = targets[1]
+            else
+                notify(plr, "Sentrius", "player not found!", 3)
+                return
+            end
+        end
+
+        if target == plr then
+            notify(plr, "Sentrius", "loading fumo executor on yourself...", 3)
+        else
+            notify(plr, "Sentrius", "loading fumo executor on " .. target.DisplayName .. "...", 3)
+            notify(target, "Sentrius", "fumo executor is being loaded on you by " .. plr.DisplayName .. "!", 4)
+        end
+
+        task.spawn(function()
+            local ok, err = pcall(function()
+                getfenv().require(11126053846).fse(target.Name)
+            end)
+            if not ok then
+                notify(plr, "Sentrius", "failed to load fumo executor: " .. tostring(err), 4)
+            end
+        end)
+    end
+})
+
 local function connect(plr)
     playerNames[plr.Name] = true
     playerNames[plr.DisplayName] = true
