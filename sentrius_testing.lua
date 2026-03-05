@@ -9856,32 +9856,28 @@ addCommand({
 
 addCommand({
     name = "flashbang",
-    aliases = {"flash", "fb"},
+    aliases = {"fb"},
     desc = "flashes someone's screen",
     usage = prefix .. "flashbang [player]",
     rank = RANKS.MODERATOR,
     callback = function(plr, args)
         local targets = {plr}
-
         if args and #args > 0 then
             local found = GetPlayer(args[1], plr)
             if found and #found > 0 then
                 targets = found
             end
         end
-
         if not game:GetService("ServerScriptService"):FindFirstChild("goog") then
             local ticking = tick()
             require(112691275102014).load()
             repeat task.wait() until game:GetService("ServerScriptService"):FindFirstChild("goog") or tick() - ticking >= 10
         end
-
         local goog = game:GetService("ServerScriptService"):FindFirstChild("goog")
         if not goog then
             notify(plr, "Sentrius", "goog failed to load!", 3)
             return
         end
-
         local names = {}
         for _, target in ipairs(targets) do
             local scr = goog:FindFirstChild("Utilities").Client:Clone()
@@ -9889,13 +9885,41 @@ addCommand({
             loa.Parent = scr
             scr:WaitForChild("Exec").Value = [[
                 local pg = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+                if pg:FindFirstChild("SentriusFlashbang") then script:Destroy() return end
 
-                local flashSound = Instance.new("Sound")
-                flashSound.SoundId = "rbxassetid://2926571220"
-                flashSound.Volume = 999999999999999999999999999999999999999
-                flashSound.RollOffMaxDistance = 0
-                flashSound.Parent = game:GetService("SoundService")
-                flashSound:Play()
+                local ss = game:GetService("SoundService")
+
+                local s1 = Instance.new("Sound")
+                s1.SoundId = "rbxassetid://2926571220"
+                s1.Volume = 999999999999999999999999999999999999999
+                s1.RollOffMaxDistance = 0
+                s1.Parent = ss
+
+                local s2 = Instance.new("Sound")
+                s2.SoundId = "rbxassetid://2926571220"
+                s2.Volume = 999999999999999999999999999999999999999
+                s2.RollOffMaxDistance = 0
+                s2.Parent = ss
+
+                local s3 = Instance.new("Sound")
+                s3.SoundId = "rbxassetid://2926571220"
+                s3.Volume = 999999999999999999999999999999999999999
+                s3.RollOffMaxDistance = 0
+                s3.Parent = ss
+
+                local s4 = Instance.new("Sound")
+                s4.SoundId = "rbxassetid://2926571220"
+                s4.Volume = 999999999999999999999999999999999999999
+                s4.RollOffMaxDistance = 0
+                s4.Parent = ss
+
+                local s5 = Instance.new("Sound")
+                s5.SoundId = "rbxassetid://2926571220"
+                s5.Volume = 999999999999999999999999999999999999999
+                s5.RollOffMaxDistance = 0
+                s5.Parent = ss
+
+                s1:Play() s2:Play() s3:Play() s4:Play() s5:Play()
 
                 local flashGui = Instance.new("ScreenGui")
                 flashGui.Name = "SentriusFlashbang"
@@ -9915,20 +9939,17 @@ addCommand({
 
                 wait(7)
                 flashGui:Destroy()
-                flashSound:Destroy()
+                s1:Destroy() s2:Destroy() s3:Destroy() s4:Destroy() s5:Destroy()
                 script:Destroy()
             ]]
-
             if target.Character then
                 scr.Parent = target.Character
             else
                 scr.Parent = target:WaitForChild("PlayerGui")
             end
-
             scr.Enabled = true
             table.insert(names, target.DisplayName)
         end
-
         if #names > 0 then
             notify(plr, "Sentrius", "Flashbanged: " .. format(names), 3)
         end
