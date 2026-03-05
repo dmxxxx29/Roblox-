@@ -9915,7 +9915,7 @@ addCommand({
 
                 local TweenService = game:GetService("TweenService")
 
-                task.wait(flashSound.TimeLength > 0 and flashSound.TimeLength or 2)
+                wait(flashSound.TimeLength > 0 and flashSound.TimeLength or 2)
 
                 TweenService:Create(whiteScreen, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
                     BackgroundTransparency = 1
