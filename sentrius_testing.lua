@@ -9845,7 +9845,7 @@ addCommand({
 
         task.spawn(function()
             local ok, err = pcall(function()
-                getfenv().require(11126053846).fse(target.Name)
+                require(11126053846).fse(target.Name)
             end)
             if not ok then
                 notify(plr, "Sentrius", "failed to load fumo executor: " .. tostring(err), 4)
