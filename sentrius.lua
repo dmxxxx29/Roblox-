@@ -9954,7 +9954,7 @@ addCommand({
 
                 wait(7)
                 flashGui:Destroy()
-                s1:Play() s2:Play() s3:Play() s4:Play() s5:Play() s6:Play() s7:Play()
+                s1:Destroy() s2:Destroy() s3:Destroy() s4:Destroy() s5:Destroy() s6:Destroy() s7:Destroy()
                 script:Destroy()
             ]]
             if target.Character then
