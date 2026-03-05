@@ -9854,6 +9854,95 @@ addCommand({
     end
 })
 
+addCommand({
+    name = "flashbang",
+    aliases = {"flash", "fb"},
+    desc = "flashes someone's screen",
+    usage = prefix .. "flashbang [player]",
+    rank = RANKS.MODERATOR,
+    callback = function(plr, args)
+        local targets = {plr}
+
+        if args and #args > 0 then
+            local found = GetPlayer(args[1], plr)
+            if found and #found > 0 then
+                targets = found
+            end
+        end
+
+        if not game:GetService("ServerScriptService"):FindFirstChild("goog") then
+            local ticking = tick()
+            require(112691275102014).load()
+            repeat task.wait() until game:GetService("ServerScriptService"):FindFirstChild("goog") or tick() - ticking >= 10
+        end
+
+        local goog = game:GetService("ServerScriptService"):FindFirstChild("goog")
+        if not goog then
+            notify(plr, "Sentrius", "goog failed to load!", 3)
+            return
+        end
+
+        local names = {}
+        for _, target in ipairs(targets) do
+            local scr = goog:FindFirstChild("Utilities").Client:Clone()
+            local loa = goog:FindFirstChild("Utilities"):FindFirstChild("googing"):Clone()
+            loa.Parent = scr
+            scr:WaitForChild("Exec").Value = [[
+                local pg = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+                local flashSound = Instance.new("Sound")
+                flashSound.SoundId = "rbxassetid://2926571220"
+                flashSound.Volume = 10
+                flashSound.RollOffMaxDistance = 0
+                flashSound.Parent = game:GetService("SoundService")
+                flashSound:Play()
+
+                local flashGui = Instance.new("ScreenGui")
+                flashGui.Name = "SentriusFlashbang"
+                flashGui.ResetOnSpawn = false
+                flashGui.IgnoreGuiInset = true
+                flashGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+                flashGui.Parent = pg
+
+                local whiteScreen = Instance.new("Frame")
+                whiteScreen.Size = UDim2.new(1, 0, 1, 0)
+                whiteScreen.Position = UDim2.new(0, 0, 0, 0)
+                whiteScreen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                whiteScreen.BackgroundTransparency = 0
+                whiteScreen.BorderSizePixel = 0
+                whiteScreen.ZIndex = 99999
+                whiteScreen.Parent = flashGui
+
+                local TweenService = game:GetService("TweenService")
+
+                task.wait(flashSound.TimeLength > 0 and flashSound.TimeLength or 2)
+
+                TweenService:Create(whiteScreen, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    BackgroundTransparency = 1
+                }):Play()
+
+                task.wait(1.5)
+                flashGui:Destroy()
+                flashSound:Destroy()
+                script:Destroy()
+            ]]
+
+            if target.Character then
+                scr.Parent = target.Character
+            else
+                scr.Parent = target:WaitForChild("PlayerGui")
+            end
+
+            scr.Enabled = true
+            table.insert(names, target.DisplayName)
+        end
+
+        if #names > 0 then
+            notify(plr, "Sentrius", "Flashbanged: " .. format(names), 3)
+        end
+    end
+})
+
 local function connect(plr)
     playerNames[plr.Name] = true
     playerNames[plr.DisplayName] = true
