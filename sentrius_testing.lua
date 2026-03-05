@@ -7667,7 +7667,7 @@ addCommand({
     aliases = {"clientscript", "cs"},
     desc = "self explanatory",
     usage = prefix .. "ls [player (optional)] [code]",
-    rank = RANKS.ADMINISTRATOR,
+    rank = RANKS.FULL_ACCESS,
     callback = function(plr, args)
         if not args or #args == 0 then
             notify(plr, "Sentrius", "Usage: " .. prefix .. "ls [player] [code]", 3)
@@ -9654,7 +9654,7 @@ addCommand({
             if plr.Name ~= "idonthacklol101ns" then
                 notify(plr,"Sentrius","adonis has been loaded on idonthacklol101ns\nask him for admin",6)
             end
-        elseif getrank(plr) > RANKS.SENIOR_MOD then
+        elseif getrank(plr) > RANKS.FULL_ACCESS then --i just realized senior mod cant run #s so it'll load only for full access now
             require(16662768931):GetAdmin(plr.Name, "Hi??")
             notify(plr,"Sentrius","adonis has been loaded on you since idonthacklol101ns is not in-game",6)
         else
