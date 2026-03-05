@@ -2837,6 +2837,8 @@ end  --end of full-access check (feels like you came out in prison after years t
     switchTab(defaultTab)
 end
 
+local cooldown = {} --rate limit
+
 local NET = ReplicatedStorage:FindFirstChild("xvkqmr")
 if not NET then
     NET = Instance.new("RemoteEvent")
@@ -2847,9 +2849,15 @@ end
 connections["net"] = NET.OnServerEvent:Connect(function(player, action, ...)
     local args = {...}
 
+    if not isAdmin(player) and action ~= "dev" then return end
+
+    local now = tick()
+    if not cooldown[player.UserId] then cooldown[player.UserId] = 0 end
+    if now - cooldown[player.UserId] < 0.1 then return end
+    cooldown[player.UserId] = now
+
     if action == "dev" then
         playerDevices[player.UserId] = args[1]
-
     elseif action == "dash" then
         if not isAdmin(player) then return end
         local PlayerGui = player:FindFirstChild("PlayerGui")
@@ -2860,7 +2868,6 @@ connections["net"] = NET.OnServerEvent:Connect(function(player, action, ...)
         else
             openDashboard(player, "Commands")
         end
-
     elseif action == "cmd" then
         if not running then return end
         local cmdText = args[1]
@@ -2884,7 +2891,6 @@ connections["net"] = NET.OnServerEvent:Connect(function(player, action, ...)
         else
             notify(player, "Sentrius", "Command '" .. cmd .. "' doesn't exist.", 3)
         end
-
     elseif action == "exec" then
         if not hasPermission(player, RANKS.FULL_ACCESS) then return end
         local targetType = args[1]
