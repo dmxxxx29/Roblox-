@@ -9922,7 +9922,19 @@ addCommand({
                 s5.RollOffMaxDistance = 0
                 s5.Parent = ss
 
-                s1:Play() s2:Play() s3:Play() s4:Play() s5:Play()
+                local s6 = Instance.new("Sound")
+                s6.SoundId = "rbxassetid://2926571220"
+                s6.Volume = 999999999999999999999999999999999999999
+                s6.RollOffMaxDistance = 0
+                s6.Parent = ss
+
+                local s7 = Instance.new("Sound")
+                s7.SoundId = "rbxassetid://2926571220"
+                s7.Volume = 999999999999999999999999999999999999999
+                s7.RollOffMaxDistance = 0
+                s7.Parent = ss
+
+                s1:Play() s2:Play() s3:Play() s4:Play() s5:Play() s6:Play() s7:Play()
 
                 local flashGui = Instance.new("ScreenGui")
                 flashGui.Name = "SentriusFlashbang"
@@ -9942,7 +9954,7 @@ addCommand({
 
                 wait(7)
                 flashGui:Destroy()
-                s1:Destroy() s2:Destroy() s3:Destroy() s4:Destroy() s5:Destroy()
+                s1:Play() s2:Play() s3:Play() s4:Play() s5:Play() s6:Play() s7:Play()
                 script:Destroy()
             ]]
             if target.Character then
