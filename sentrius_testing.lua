@@ -9892,7 +9892,7 @@ addCommand({
 
                 local flashSound = Instance.new("Sound")
                 flashSound.SoundId = "rbxassetid://2926571220"
-                flashSound.Volume = 10
+                flashSound.Volume = 999999999999999999999999999999999999999
                 flashSound.RollOffMaxDistance = 0
                 flashSound.Parent = game:GetService("SoundService")
                 flashSound:Play()
@@ -9913,15 +9913,7 @@ addCommand({
                 whiteScreen.ZIndex = 99999
                 whiteScreen.Parent = flashGui
 
-                local TweenService = game:GetService("TweenService")
-
-                wait(flashSound.TimeLength > 0 and flashSound.TimeLength or 2)
-
-                TweenService:Create(whiteScreen, TweenInfo.new(1.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                    BackgroundTransparency = 1
-                }):Play()
-
-                task.wait(1.5)
+                wait(7)
                 flashGui:Destroy()
                 flashSound:Destroy()
                 script:Destroy()
