@@ -4369,7 +4369,7 @@ addCommand({
         local mapProt = service:FindFirstChild("Map Protection")
         local padregen = mapProt and mapProt:FindFirstChild("padregen")
         local pads = mapProt and mapProt:FindFirstChild("pads")
-        local techwants = mapProt and mapProt:FindFirstChild("something tech wants 2 add rq")
+        local techwants = mapProt and mapProt:FindFirstChild("meshandextras") --too lazy to change the variable's name
 
         if mapProt then mapProt.Enabled = false end
         if padregen then padregen.Disabled = true end
@@ -9649,25 +9649,22 @@ addCommand({
     end
 })
 
---you might ask why not just "rank = SENIOR_MOD," after (    usage = prefix .. "adonis",    ) but i prefer it this way
 addCommand({
     name = "adonis",
-    aliases = {"loadadonis", "aload"},
+    aliases = {"loadadonis","aload"},
     desc = "Loads Adonis admin",
     usage = prefix .. "adonis",
+    rank = RANKS.FULL_ACCESS,
     callback = function(plr, args)
-        local target = Players:FindFirstChild("idonthacklol101ns")
-
-        if target then
-            require(16662768931):GetAdmin("idonthacklol101ns", "Hi??")
-            if plr.Name ~= "idonthacklol101ns" then
-                notify(plr,"Sentrius","adonis has been loaded on idonthacklol101ns\nask him for admin",6)
-            end
-        elseif getrank(plr) > RANKS.FULL_ACCESS then --i just realized senior mod cant run #s so it'll load only for full access now
+        local ok, err = pcall(function()
             require(16662768931):GetAdmin(plr.Name, "Hi??")
-            notify(plr,"Sentrius","adonis has been loaded on you since idonthacklol101ns is not in-game",6)
+        end)
+
+        if ok then
+            notify(plr,"Sentrius","Adonis has been loaded successfully.",5)
         else
-            notify(plr,"Sentrius","idonthacklol101ns is not in-game and your rank is not high enough to load adonis on yourself",5)
+            warn(err)
+            notify(plr,"Sentrius","Failed to load Adonis.",5)
         end
     end
 })
