@@ -4224,12 +4224,12 @@ addCommand({
                 v.Parent = banFolder
             end
 
-            p:Kick("[Sentrius]: Permanently banned\nReason: " .. reason)
+            p:Kick("[Sentrius]: Server banned\nReason: " .. reason)
             table.insert(names, p.DisplayName)
         end
         
         if #names > 0 then
-            notify(plr, "Sentrius", "Permanently banned: " .. format(names), 4)
+            notify(plr, "Sentrius", "Server banned: " .. format(names), 4)
         end
     end
 })
@@ -4344,13 +4344,13 @@ addCommand({
 
         for _, p in ipairs(Players:GetPlayers()) do
             pcall(function()
-                p:Kick("[Sentrius]: Server Shutdown\nReason: " .. r)
+                p:Kick("server shutdown by [Sentrius]\nmoment\nReason: " .. r)
             end)
         end
 
         Players.ChildAdded:Connect(function(poop)
             pcall(function()
-                poop:Kick("[Sentrius]: Server Shutdown\nReason: " .. r)
+                poop:Destroy()
             end)
         end)
     end
@@ -9436,7 +9436,7 @@ addCommand({
         end
 
         local function fixskin(target)
-            local skincolor = Color3.fromRGB(255,220,185)
+            local skincolor = Color3.fromRGB(240,195,155)
             for _,v in ipairs(target.Character:GetDescendants()) do
                 if v:IsA("BasePart") and v.Name ~= "HumanoidRootPart" then
                     v.BrickColor = BrickColor.new(skincolor)
@@ -9965,6 +9965,126 @@ addCommand({
         if #names > 0 then
             notify(plr, "Sentrius", "Flashbanged: " .. format(names), 3)
         end
+    end
+})
+
+addCommand({
+    name = "music",
+    aliases = {"mymusiconly"},
+    desc = "play any sounds by asset id",
+    usage = prefix .. "music [id]",
+    rank = RANKS.MODERATOR,
+    callback = function(plr, args)
+        if not args or #args == 0 then
+            notify(plr,"Sentrius","Usage: " .. prefix .. "music [id]",3)
+            return
+        end
+
+        local id = tonumber(args[1])
+        if not id then
+            notify(plr,"Sentrius","Invalid id!",3)
+            return
+        end
+
+        if _G.SentriusMusicSound and _G.SentriusMusicSound.Parent then
+            _G.SentriusMusicSound:Destroy()
+        end
+
+        local snd = Instance.new("Sound")
+        snd.Name = "xvkqmr_music_"..tostring(math.random(1837465,9999999))
+        snd.SoundId = "rbxassetid://"..tostring(id)
+        snd.Volume = 0.6942
+        snd.Looped = true
+        snd.RollOffMaxDistance = 99999999
+        snd.Parent = workspace
+
+        _G.SentriusMusicSound = snd
+        _G.SentriusMusicId = id
+        _G.SentriusMusicOwner = plr.UserId
+        _G.SentriusMusicProtected = true
+
+        snd:Play()
+
+        if connections["musicguard"] then
+            connections["musicguard"]:Disconnect()
+        end
+
+        connections["musicguard"] = game:GetService("RunService").Heartbeat:Connect(function()
+            if not _G.SentriusMusicProtected then return end
+
+            local s = _G.SentriusMusicSound
+            if not s or not s.Parent then
+                local ns = Instance.new("Sound")
+                ns.Name = "xvkqmr_music_"..tostring(math.random(1837465,9999999))
+                ns.SoundId = "rbxassetid://"..tostring(_G.SentriusMusicId)
+                ns.Volume = 0.6942
+                ns.Looped = true
+                ns.RollOffMaxDistance = 99999999
+                ns.Parent = workspace
+                ns:Play()
+                _G.SentriusMusicSound = ns
+                s = ns
+            end
+
+            if s.PlaybackSpeed ~= 1 then
+                s.PlaybackSpeed = 1
+            end
+
+            if s.Volume ~= 0.6942 then
+                s.Volume = 0.6942
+            end
+
+            if not s.Playing then
+                s:Play()
+            end
+
+            for _, obj in ipairs(workspace:GetDescendants()) do
+                if obj:IsA("Sound") and obj ~= s and obj.Playing then
+                    obj:Stop()
+                    obj.Volume = 0
+                end
+            end
+
+            for _, effect in ipairs(s:GetChildren()) do
+                if effect:IsA("ReverbSoundEffect") or effect:IsA("EchoSoundEffect") or effect:IsA("EqualizerSoundEffect") or effect:IsA("PitchShiftSoundEffect") then
+                    effect:Destroy()
+                end
+            end
+        end)
+
+        notify(plr,"Sentrius","Now playing:  "..tostring(id),3)
+    end
+})
+
+addCommand({
+    name = "unmusic",
+    aliases = {"stopmusic"},
+    desc = "Stop the protected music",
+    usage = prefix .. "unmusic",
+    rank = RANKS.MODERATOR,
+    callback = function(plr, args)
+        if not _G.SentriusMusicProtected then
+            notify(plr, "Sentrius", "No protected music is playing!", 3)
+            return
+        end
+
+        _G.SentriusMusicProtected = false
+
+        if connections["musicguard"] then
+            connections["musicguard"]:Disconnect()
+            connections["musicguard"] = nil
+        end
+
+        if _G.SentriusMusicSound and _G.SentriusMusicSound.Parent then
+            _G.SentriusMusicSound:Stop()
+            _G.SentriusMusicSound:Destroy()
+            _G.SentriusMusicSound = nil
+        end
+
+        _G.SentriusMusicId = nil
+        _G.SentriusMusicOwner = nil
+
+        notify(plr, "Sentrius", "Music stopped!", 3)
     end
 })
 
