@@ -9986,9 +9986,26 @@ addCommand({
             return
         end
 
+        local assetOk = false
+        local assetName = "Unknown"
+        pcall(function()
+            local info = game:GetService("MarketplaceService"):GetProductInfo(id, Enum.InfoType.Asset)
+            if info and info.AssetTypeId == 3 then -- 3 = audio!!
+                assetOk = true
+                assetName = info.Name or "Unknown"
+            end
+        end)
+
+        if not assetOk then
+            notify(plr,"Sentrius","That id is not a valid audio asset on the marketplace!",4)
+            return
+        end
+
         if _G.SentriusMusicSound and _G.SentriusMusicSound.Parent then
             _G.SentriusMusicSound:Destroy()
         end
+
+        _G.SentriusMusicPosition = 0
 
         local snd = Instance.new("Sound")
         snd.Name = "xvkqmr_music_"..tostring(math.random(1837465,9999999))
@@ -9997,12 +10014,10 @@ addCommand({
         snd.Looped = true
         snd.RollOffMaxDistance = 99999999
         snd.Parent = workspace
-
         _G.SentriusMusicSound = snd
         _G.SentriusMusicId = id
         _G.SentriusMusicOwner = plr.UserId
         _G.SentriusMusicProtected = true
-
         snd:Play()
 
         if connections["musicguard"] then
@@ -10011,9 +10026,9 @@ addCommand({
 
         connections["musicguard"] = game:GetService("RunService").Heartbeat:Connect(function()
             if not _G.SentriusMusicProtected then return end
-
             local s = _G.SentriusMusicSound
             if not s or not s.Parent then
+                local savedPos = _G.SentriusMusicPosition or 0
                 local ns = Instance.new("Sound")
                 ns.Name = "xvkqmr_music_"..tostring(math.random(1837465,9999999))
                 ns.SoundId = "rbxassetid://"..tostring(_G.SentriusMusicId)
@@ -10022,29 +10037,29 @@ addCommand({
                 ns.RollOffMaxDistance = 99999999
                 ns.Parent = workspace
                 ns:Play()
+                ns.TimePosition = savedPos
                 _G.SentriusMusicSound = ns
                 s = ns
             end
 
+            _G.SentriusMusicPosition = s.TimePosition
+
             if s.PlaybackSpeed ~= 1 then
                 s.PlaybackSpeed = 1
             end
-
             if s.Volume ~= 0.6942 then
                 s.Volume = 0.6942
             end
-
             if not s.Playing then
                 s:Play()
+                s.TimePosition = _G.SentriusMusicPosition or 0
             end
-
             for _, obj in ipairs(workspace:GetDescendants()) do
                 if obj:IsA("Sound") and obj ~= s and obj.Playing then
                     obj:Stop()
                     obj.Volume = 0
                 end
             end
-
             for _, effect in ipairs(s:GetChildren()) do
                 if effect:IsA("ReverbSoundEffect") or effect:IsA("EchoSoundEffect") or effect:IsA("EqualizerSoundEffect") or effect:IsA("PitchShiftSoundEffect") then
                     effect:Destroy()
@@ -10052,7 +10067,7 @@ addCommand({
             end
         end)
 
-        notify(plr,"Sentrius","Now playing:  "..tostring(id),3)
+        notify(plr,"Sentrius","Now playing: "..assetName.." ("..tostring(id)..")",4)
     end
 })
 
@@ -10064,27 +10079,23 @@ addCommand({
     rank = RANKS.MODERATOR,
     callback = function(plr, args)
         if not _G.SentriusMusicProtected then
-            notify(plr, "Sentrius", "No protected music is playing!", 3)
+            notify(plr,"Sentrius","No protected music is playing!",3)
             return
         end
-
         _G.SentriusMusicProtected = false
-
         if connections["musicguard"] then
             connections["musicguard"]:Disconnect()
             connections["musicguard"] = nil
         end
-
         if _G.SentriusMusicSound and _G.SentriusMusicSound.Parent then
             _G.SentriusMusicSound:Stop()
             _G.SentriusMusicSound:Destroy()
             _G.SentriusMusicSound = nil
         end
-
         _G.SentriusMusicId = nil
         _G.SentriusMusicOwner = nil
-
-        notify(plr, "Sentrius", "Music stopped!", 3)
+        _G.SentriusMusicPosition = nil
+        notify(plr,"Sentrius","Music stopped!",3)
     end
 })
 
