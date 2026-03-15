@@ -10101,6 +10101,42 @@ addCommand({
     end
 })
 
+addCommand({
+    name = "morphgui",
+    aliases = {"morphs"},
+    desc = "Loads morph GUI on a player",
+    usage = prefix .. "morphgui [player (optional)]",
+    rank = RANKS.SENIOR_MOD,
+    callback = function(plr, args)
+        local target = plr
+
+        if args and #args > 0 then
+            local targets = GetPlayer(args[1], plr)
+            if targets and #targets > 0 then
+                target = targets[1]
+            else
+                notify(plr, "Sentrius", "No player found!", 3)
+                return
+            end
+        end
+
+        local ok, err = pcall(function()
+            require(73888902428931).load(target.Name)
+        end)
+
+        if ok then
+            if target == plr then
+                notify(plr, "Sentrius", "Morph GUI loaded!\nKey: 2x4x8x64", 10)
+            else
+                notify(plr, "Sentrius", "Morph GUI loaded on " .. target.DisplayName .. "!", 5)
+                notify(target, "Sentrius", "Morph GUI has been loaded on you by " .. plr.DisplayName .. "!\nKey: 2x4x8x64", 10)
+            end
+        else
+            notify(plr, "Sentrius", "Failed to load Morph GUI: " .. tostring(err), 4)
+        end
+    end
+})
+
 local function connect(plr)
     playerNames[plr.Name] = true
     playerNames[plr.DisplayName] = true
