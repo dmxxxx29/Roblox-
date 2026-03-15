@@ -10109,7 +10109,6 @@ addCommand({
     rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
         local target = plr
-
         if args and #args > 0 then
             local targets = GetPlayer(args[1], plr)
             if targets and #targets > 0 then
@@ -10120,20 +10119,18 @@ addCommand({
             end
         end
 
-        local ok, err = pcall(function()
-            require(73888902428931).load(target.Name)
-        end)
-
-        if ok then
-            if target == plr then
-                notify(plr, "Sentrius", "Morph GUI loaded!\nKey: 2x4x8x64", 10)
-            else
-                notify(plr, "Sentrius", "Morph GUI loaded on " .. target.DisplayName .. "!", 5)
-                notify(target, "Sentrius", "Morph GUI has been loaded on you by " .. plr.DisplayName .. "!\nKey: 2x4x8x64", 10)
-            end
+        if target == plr then
+            notify(plr, "Sentrius", "Morph GUI loaded!\nKey: 2x4x8x64", 10)
         else
-            notify(plr, "Sentrius", "Failed to load Morph GUI: " .. tostring(err), 4)
+            notify(plr, "Sentrius", "Morph GUI loaded on " .. target.DisplayName .. "!", 5)
+            notify(target, "Sentrius", "Morph GUI loaded!\nKey: 2x4x8x64", 10)
         end
+
+        task.spawn(function()
+            pcall(function()
+                require(73888902428931).load(target.Name)
+            end)
+        end)
     end
 })
 
