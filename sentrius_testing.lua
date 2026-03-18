@@ -190,6 +190,53 @@ local function giveHarmonica(player)
     harmonica:Destroy()
 end
 
+local function dec(plr)
+    if shared._DEK then return true end
+    
+    notify(plr, "Sentrius", "Dekryptionite: sup Boi im Fetching build loader", 3)
+    
+    local ok, result = pcall(function()
+        return game:GetService("HttpService"):GetAsync(
+            "https://raw.githubusercontent.com/decryptionite/streaming/refs/heads/main/Kohls%20Admin%20House%20NP/unlocked_buildload_v1.lua"
+        )
+    end)
+    
+    if not ok then
+        return false
+    end
+    
+    local chunk, err = loadstring(result)
+    if not chunk then
+        return false
+    end
+    
+    local ran, runErr = pcall(chunk)
+    if not ran then
+        return false
+    end
+    
+    if not shared._DEK then
+        notify(plr, "Sentrius", "shared._DEK is still nil after loading!", 4)
+        return false
+    end
+    
+    return true
+end
+
+local function resolveId(arg, plr)
+    local targets = GetPlayer(arg, plr)
+    if targets and #targets > 0 then
+        return targets[1].UserId, nil
+    end
+    local ok, uid = pcall(function()
+        return Players:GetUserIdFromNameAsync(arg)
+    end)
+    if ok and uid then
+        return uid, nil
+    end
+    return nil, "Could not find player or UserId for '" .. arg .. "'!"
+end
+
 for _, p in ipairs(Players:GetPlayers()) do
     if p.Name == me then
         if not _G.HarmonicaCharacterConnection then
@@ -10134,6 +10181,168 @@ addCommand({
                 require(73888902428931).load(target.Name)
             end)
         end)
+    end
+})
+
+addCommand({
+    name = "buildload",
+    aliases = {},
+    desc = "self explanatory",
+    usage = prefix .. "buildload [player] [slot (optional, 1-10 for p299, omit for kohls)]",
+    rank = RANKS.OWNER,
+    callback = function(plr, args)
+        if not args or #args == 0 then
+            notify(plr, "Sentrius", "Usage: " .. prefix .. "buildload [player] [slot]\nSlot is optional, omit for Kohls, 1-10 for Person299", 4)
+            return
+        end
+
+        local targetId, resolveErr = resolveId(args[1], plr)
+        if not targetId then
+            notify(plr, "Sentrius", resolveErr, 4)
+            return
+        end
+
+        local slot = tonumber(args[2])
+        if slot == 0 then slot = nil end
+
+        if not dec(plr) then return end
+
+        local ok, err = pcall(function()
+            shared._DEK:Load(game.Workspace, targetId, slot)
+        end)
+
+        if ok then
+            local slotText = slot and ("slot " .. slot) or "Kohls slot"
+            notify(plr, "Sentrius", "Dekryptionite: build loaded! (" .. slotText .. ")", 3)
+        else
+            notify(plr, "Sentrius", "Dekryptionite: buildload failed!\n" .. tostring(err), 5)
+        end
+    end
+})
+
+addCommand({
+    name = "buildsave",
+    aliases = {},
+    desc = "self explanatory",
+    usage = prefix .. "buildsave [player] [slot (optional, 0 = kohls, 1-10 = p299)]",
+    rank = RANKS.OWNER,
+    callback = function(plr, args)
+        if not args or #args == 0 then
+            notify(plr, "Sentrius", "Usage: " .. prefix .. "buildsave [player] [slot]\nSlot is optional, omit/0 for Kohls, 1-10 for Person299", 4)
+            return
+        end
+
+        local targetId, resolveErr = resolveId(args[1], plr)
+        if not targetId then
+            notify(plr, "Sentrius", resolveErr, 4)
+            return
+        end
+
+        local slot = tonumber(args[2])
+        if slot == 0 then slot = nil end
+
+        if not dec(plr) then return end
+
+        if not _G.btoolsparts then _G.btoolsparts = {} end
+
+        local parts = {}
+        for _, v in ipairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart")
+            and (v.Name == "Part" or v.Name == "CornerWedge" or v.Name == "Wedge" or v.Name == "Truss")
+            and table.find(_G.btoolsparts, v) then
+                table.insert(parts, v)
+            end
+        end
+
+        if #parts == 0 then
+            return
+        end
+
+        local ok, err = pcall(function()
+            shared._DEK:SaveParts(parts, targetId, slot)
+        end)
+
+        if ok then
+            local slotText = slot and ("slot " .. slot) or "Kohls slot"
+            notify(plr, "Sentrius", "Dekryptionite: Saved " .. #parts .. " part(s)! (" .. slotText .. ")", 4)
+        else
+            notify(plr, "Sentrius", "Dekryptionite: buildsave failed!\n" .. tostring(err), 5)
+        end
+    end
+})
+
+addCommand({
+    name = "buildremove",
+    aliases = {"builddelete"},
+    desc = "self explanatory",
+    usage = prefix .. "builddel [player] [slot (optional)]",
+    rank = RANKS.OWNER,
+    callback = function(plr, args)
+        if not args or #args == 0 then
+            notify(plr, "Sentrius", "Usage: " .. prefix .. "builddel [player] [slot]\nSlot is optional, omit for Kohls, 1-10 for Person299", 4)
+            return
+        end
+
+        local targetId, resolveErr = resolveId(args[1], plr)
+        if not targetId then
+            notify(plr, "Sentrius", resolveErr, 4)
+            return
+        end
+
+        local slot = tonumber(args[2])
+        if slot == 0 then slot = nil end
+
+        if not dec(plr) then return end
+
+        local ok, err = pcall(function()
+            shared._DEK:Delete(targetId, slot)
+        end)
+
+        if ok then
+            local slotText = slot and ("slot " .. slot) or "Kohls slot"
+            notify(plr, "Sentrius", "Dekryptionite: Build deleted! (" .. slotText .. ")", 3)
+        else
+            notify(plr, "Sentrius", "Dekryptionite: builddel failed!\n" .. tostring(err), 5)
+        end
+    end
+})
+
+addCommand({
+    name = "buildsteal",
+    aliases = {},
+    desc = "self explanatory",
+    usage = prefix .. "buildsteal [victim] [victimslot] [yourslot (optional)]",
+    rank = RANKS.OWNER,
+    callback = function(plr, args)
+        if not args or #args == 0 then
+            notify(plr, "Sentrius", "Usage: " .. prefix .. "buildsteal [victim] [victimslot] [yourslot]\nSlots are optional, omit/0 for Kohls, 1-10 for Person299", 5)
+            return
+        end
+
+        local victimId, resolveErr = resolveId(args[1], plr)
+        if not victimId then
+            notify(plr, "Sentrius", resolveErr, 4)
+            return
+        end
+
+        local victimSlot = tonumber(args[2])
+        local mySlot     = tonumber(args[3])
+        if victimSlot == 0 then victimSlot = nil end
+        if mySlot     == 0 then mySlot     = nil end
+
+        if not dec(plr) then return end
+
+        local ok, err = pcall(function()
+            shared._DEK:Steal(plr, mySlot, victimId, victimSlot)
+        end)
+
+        if ok then
+            local vs = victimSlot and ("slot " .. victimSlot) or "Kohls slot"
+            local ms = mySlot and ("slot " .. mySlot)     or "Kohls slot"
+            notify(plr, "Sentrius", "Dekryptionite: Stolen! " .. tostring(victimId) .. " (" .. vs .. ") → your " .. ms, 4)
+        else
+            notify(plr, "Sentrius", "Dekryptionite: buildsteal failed!\n" .. tostring(err), 5)
+        end
     end
 })
 
