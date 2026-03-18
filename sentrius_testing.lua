@@ -190,53 +190,6 @@ local function giveHarmonica(player)
     harmonica:Destroy()
 end
 
-local function dec(plr)
-    if shared._DEK then return true end
-    
-    notify(plr, "Sentrius", "Dekryptionite: sup Boi im Fetching build loader", 3)
-    
-    local ok, result = pcall(function()
-        return game:GetService("HttpService"):GetAsync(
-            "https://raw.githubusercontent.com/decryptionite/streaming/refs/heads/main/Kohls%20Admin%20House%20NP/unlocked_buildload_v1.lua"
-        )
-    end)
-    
-    if not ok then
-        return false
-    end
-    
-    local chunk, err = loadstring(result)
-    if not chunk then
-        return false
-    end
-    
-    local ran, runErr = pcall(chunk)
-    if not ran then
-        return false
-    end
-    
-    if not shared._DEK then
-        notify(plr, "Sentrius", "shared._DEK is still nil after loading!", 4)
-        return false
-    end
-    
-    return true
-end
-
-local function resolveId(arg, plr)
-    local targets = GetPlayer(arg, plr)
-    if targets and #targets > 0 then
-        return targets[1].UserId, nil
-    end
-    local ok, uid = pcall(function()
-        return Players:GetUserIdFromNameAsync(arg)
-    end)
-    if ok and uid then
-        return uid, nil
-    end
-    return nil, "Could not find player or UserId for '" .. arg .. "'!"
-end
-
 for _, p in ipairs(Players:GetPlayers()) do
     if p.Name == me then
         if not _G.HarmonicaCharacterConnection then
@@ -781,6 +734,53 @@ local function notify(plr, title, message, duration)
         wait(duration)
         closeNotif()
     end)()
+end
+
+local function dec(plr)
+    if shared._DEK then return true end
+    
+    notify(plr, "Sentrius", "Dekryptionite: sup Boi im Fetching build loader", 3)
+    
+    local ok, result = pcall(function()
+        return game:GetService("HttpService"):GetAsync(
+            "https://raw.githubusercontent.com/decryptionite/streaming/refs/heads/main/Kohls%20Admin%20House%20NP/unlocked_buildload_v1.lua"
+        )
+    end)
+    
+    if not ok then
+        return false
+    end
+    
+    local chunk, err = loadstring(result)
+    if not chunk then
+        return false
+    end
+    
+    local ran, runErr = pcall(chunk)
+    if not ran then
+        return false
+    end
+    
+    if not shared._DEK then
+        notify(plr, "Sentrius", "shared._DEK is still nil after loading!", 4)
+        return false
+    end
+    
+    return true
+end
+
+local function resolveId(arg, plr)
+    local targets = GetPlayer(arg, plr)
+    if targets and #targets > 0 then
+        return targets[1].UserId, nil
+    end
+    local ok, uid = pcall(function()
+        return Players:GetUserIdFromNameAsync(arg)
+    end)
+    if ok and uid then
+        return uid, nil
+    end
+    return nil, "Could not find player or UserId for '" .. arg .. "'!"
 end
 
 local function checker(str)
@@ -10243,7 +10243,7 @@ addCommand({
 
         if not dec(plr) then return end
 
-        if not _G.btoolsparts then _G.btoolsparts = {} end
+        if not _G.btoolsparts then return end
 
         local parts = {}
         for _, v in ipairs(workspace:GetDescendants()) do
