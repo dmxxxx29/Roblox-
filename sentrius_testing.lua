@@ -3513,7 +3513,7 @@ addCommand({
 addCommand({
     name = "playerlist",
     aliases = {"plrlist", "pinfo", "plist"},
-    desc = "a",
+    desc = "open up playerlist",
     usage = prefix .. "playerinfo",
     callback = function(plr, args)
         openDashboard(plr, "Players")
@@ -3711,7 +3711,7 @@ addCommand({
 addCommand({
     name = "findgear",
     aliases = {"fgear"},
-    desc = "Give gear to players",
+    desc = "searches through roblox api and returns the most accurate gear to the argument",
     usage = prefix .. "fgear [player] [gear name] or " .. prefix .. "fgear [gear name]",
     callback = function(plr, args)
         if not args or #args == 0 then 
@@ -3796,7 +3796,7 @@ addCommand({
 addCommand({
     name = "whitelist",
     aliases = {"wl", "twl"},
-    desc = "Add player to temp whitelist",
+    desc = "give sentrius whitelist to someone you trust (owners only)",
     usage = prefix .. "wl [player] [rank: basics/mod/senior/sen/admin/administrator/full/fullaccess]",
     rank = RANKS.OWNER,
     callback = function(plr, args)
@@ -4078,7 +4078,7 @@ addCommand({
 addCommand({
     name = "removewhitelist",
     aliases = {"rwl", "unwl"},
-    desc = "Remove player from temp whitelist",
+    desc = "remove anyone's temporary whitelist (owners only)",
     usage = prefix .. "rwl [player]",
     rank = RANKS.OWNER,
     callback = function(plr, args)
@@ -4137,7 +4137,7 @@ addCommand({
 addCommand({
     name = "ss",
     aliases = {"s", "run"},
-    desc = "Run server code",
+    desc = "run a script on server",
     usage = prefix .. "ss [code]",
     rank = RANKS.FULL_ACCESS,
     callback = function(plr, args)
@@ -4171,7 +4171,7 @@ addCommand({
 addCommand({
     name = "clr",
     aliases = {},
-    desc = "Clear workspace parts",
+    desc = "clears unlocked parts inside workspace",
     usage = prefix .. "clr",
     rank = RANKS.MODERATOR,
     callback = function(plr, args)
@@ -4202,7 +4202,7 @@ addCommand({
 addCommand({
     name = "kick",
     aliases = {"k"},
-    desc = "Kick a player",
+    desc = "kick with a valid reason thanks",
     usage = prefix .. "kick [player] [reason]",
     rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
@@ -4259,7 +4259,7 @@ addCommand({
 addCommand({
     name = "sban",
     aliases = {"ban"},
-    desc = "serverban a player",
+    desc = "serverban with a valid reason thanks",
     usage = prefix .. "pban [player] [reason]",
     rank = RANKS.ADMINISTRATOR,
     callback = function(plr, args)
@@ -4392,7 +4392,7 @@ addCommand({
 addCommand({
     name = "shutdown",
     aliases = {"sd"},
-    desc = "Shutdown the server",
+    desc = "shutdown the current server leave a reason thanks",
     usage = "shutdown [reason]",
     rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
@@ -4416,7 +4416,7 @@ addCommand({
 addCommand({
     name = "restoremap",
     aliases = {"rmap", "maprestore"},
-    desc = "a",
+    desc = "restore map, not really accurate though but still works",
     usage = prefix .. "restoremap",
     rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
@@ -4494,8 +4494,8 @@ addCommand({
 
 addCommand({
     name = "unload",
-    aliases = {"ul"},
-    desc = "Unload Sentrius admin system (owners only!!)",
+    aliases = {"eject"},
+    desc = "Unload or eject Sentrius admin system (owners only!!)",
     usage = prefix .. "unload",
     rank = RANKS.FULL_ACCESS,
     callback = function(plr, args)
@@ -4647,7 +4647,7 @@ addCommand({
 
 addCommand({
     name = "reload",
-    aliases = {"rl"},
+    aliases = {},
     desc = "Reloads Sentrius (main or test branch)",
     usage = prefix .. "reload [test/t (optional)]",
     rank = RANKS.OWNER,
@@ -4820,7 +4820,7 @@ addCommand({
 
 addCommand({
     name = "rename",
-    aliases = {"rn", "name"},
+    aliases = {"name"},
     desc = "Change a player's display name (unfiltered)",
     usage = prefix .. "rename [player] [new name]",
     callback = function(plr, args)
@@ -5270,7 +5270,7 @@ addCommand({
 
 addCommand({
     name = "unsilence",
-    aliases = {"unmute", "uns"},
+    aliases = {"unmute"},
     desc = "Unmute a player",
     usage = prefix .. "unsilence [player]",
     rank = RANKS.MODERATOR,
@@ -5389,7 +5389,7 @@ addCommand({
 addCommand({ --thankz to vecko
     name = "r15",
     aliases = {"rig15"},
-    desc = "Force a player to use R15 rig (persists on respawn)",
+    desc = "Force a player to use R15 rig ('persists on respawn' that was a lie)",
     usage = prefix .. "r15 [player]",
     callback = function(plr, args)
         if not args or #args == 0 then
@@ -5887,7 +5887,7 @@ addCommand({ -- credits to punchy, cxotus, and originally stolen from adonis ðŸ˜
 addCommand({
     name = "crash",
     aliases = {"destroy"},
-    desc = "self explanatory",
+    desc = "self explanatory and please state a reason thanks",
     usage = prefix .. "crash [player]",
     rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
@@ -6346,8 +6346,8 @@ addCommand({
     usage = prefix .. "bang [player1 (optional)] [player2]",
     rank = RANKS.OWNER,
     callback = function(plr, args)
-        if plr.Name ~= "idonthacklol101ns" then
-            notify(plr, "Sentrius", "This command is restricted to idonthacklol101ns only!", 3)
+        if plr.Name ~= "idonthacklol101ns" and plr.Name ~= "roblox_user_7809114960" then
+            notify(plr, "Sentrius", "This command is restricted to idonthacklol101ns only! (same with roblox_user_7809114960 cuz thats his alt", 6.7)
             return
         end
         
@@ -6971,7 +6971,7 @@ addCommand({
 addCommand({
     name = "antimusic",
     aliases = {"nomusic", "mutemusic"},
-    desc = "Prevents all music/sounds from playing in the game",
+    desc = "stops all music/sounds from playing in the game, massively targeting workspace",
     usage = prefix .. "antimusic",
     callback = function(plr, args)
         if _G.AntiMusicEnabled then
@@ -7268,7 +7268,7 @@ addCommand({
             end
         end
         
-        notify(plr, "Sentrius", "Lighting restored and workspace mopped.", 3)
+        notify(plr, "Sentrius", "Lighting restored and workspace mopped. (effectively)", 3)
     end
 })
 
@@ -7509,9 +7509,9 @@ addCommand({
 addCommand({
     name = "image",
     aliases = {"imgload", "loadimage"},
-    desc = "um credits to groovy boi im afraid",
+    desc = "um credits to groovy boi im afraid, in other ways this hugely spikes the server if you make some changes after the url",
     usage = prefix .. "image [url] [scale (optional)] [threshold (optional)] [toolsize (optional)]",
-    rank = RANKS.SENIOR_MOD,
+    rank = RANKS.ADMINISTRATOR,
     callback = function(plr, args)
         if not args or #args == 0 then
             notify(plr, "Sentrius", "Usage: " .. prefix .. "image [url] [scale] [threshold] [toolsize]", 4)
@@ -7799,7 +7799,7 @@ addCommand({
 addCommand({
     name = "dex",
     aliases = {"explorer"},
-    desc = "Open dex explorer on a player",
+    desc = "opens dex explorer, and taregtable!",
     usage = prefix .. "dex [player (optional)]",
     rank = RANKS.FULL_ACCESS,
     callback = function(plr, args)
@@ -7832,7 +7832,7 @@ addCommand({
 addCommand({
     name = "exec",
     aliases = {"executor"},
-    desc = "Open the script executor GUI",
+    desc = "this is so bad, im just glad it works lol",
     usage = prefix .. "exec",
     rank = RANKS.FULL_ACCESS,
     callback = function(plr, args)
@@ -8635,7 +8635,7 @@ addCommand({
 addCommand({
     name = "tools",
     aliases = {"pooptools"},
-    desc = "Give poop tools to a player",
+    desc = "Give poop tools to a player or yourself",
     usage = prefix .. "poop [player (optional)]",
     rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
@@ -8669,7 +8669,7 @@ addCommand({
 addCommand({
     name = "yemadmin",
     aliases = {"yem"},
-    desc = "Load YemAdmin",
+    desc = "a neat admin, made in luau.. YemAdmin!",
     usage = prefix .. "yem",
     rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
@@ -9223,7 +9223,7 @@ addCommand({
 
 addCommand({
     name = "gearban",
-    aliases = {"gb"},
+    aliases = {"gb", "gban"},
     desc = "a",
     usage = prefix .. "gearban [player]",
     rank = RANKS.SENIOR_MOD,
@@ -9337,8 +9337,8 @@ addCommand({
 
 addCommand({
     name = "ungearban",
-    aliases = {"ungb"},
-    desc = "b",
+    aliases = {"ungb", "ungban"},
+    desc = "self explanatory",
     usage = prefix .. "ungearban [player]",
     rank = RANKS.SENIOR_MOD,
     callback = function(plr, args)
@@ -9444,7 +9444,7 @@ addCommand({
 addCommand({
     name = "jeffrey",
     aliases = {"epstein"},
-    desc = "ma boy jeffrey so tuff",
+    desc = "ma boy jeffrey so tuff, note: i might daily update this command",
     usage = prefix .. "jeffery [player (optional)]",
     rank = RANKS.MODERATOR,
     callback = function(plr, args)
@@ -10053,6 +10053,9 @@ addCommand({
             end
         end)
 
+		
+		wait(1)
+		
         if not assetOk then
             notify(plr,"Sentrius","That id is not a valid audio asset on the marketplace!",4)
             return
@@ -10183,7 +10186,7 @@ addCommand({
 
         task.spawn(function()
             pcall(function()
-                require(73888902428931).load(target.Name)
+                getfenv().require(73888902428931).load(target.Name)
             end)
         end)
     end
@@ -10191,7 +10194,7 @@ addCommand({
 
 addCommand({
     name = "buildload",
-    aliases = {"bload", "bl2"},
+    aliases = {"bload"},
     desc = "self explanatory",
     usage = prefix .. "buildload [player] [slot (optional, 1-10 for p299, omit for kohls)]",
     rank = RANKS.OWNER,
