@@ -774,13 +774,18 @@ local function resolveId(arg, plr)
     if targets and #targets > 0 then
         return targets[1].UserId, nil
     end
-    local ok, uid = pcall(function()
-        return Players:GetUserIdFromNameAsync(arg)
+    
+
+    local uid
+    local ok, err = pcall(function()
+        uid = Players:GetUserIdFromNameAsync(arg)
     end)
-    if ok and uid then
-        return uid, nil
+    
+    if not ok or not uid then
+        return nil, "Player '" .. arg .. "' not found in server and Roblox couldn't resolve the username!\nMake sure you typed the exact username correctly."
     end
-    return nil, "Could not find player or UserId for '" .. arg .. "'!"
+    
+    return uid, nil
 end
 
 local function checker(str)
@@ -10186,7 +10191,7 @@ addCommand({
 
 addCommand({
     name = "buildload",
-    aliases = {},
+    aliases = {"bload", "bl2"},
     desc = "self explanatory",
     usage = prefix .. "buildload [player] [slot (optional, 1-10 for p299, omit for kohls)]",
     rank = RANKS.OWNER,
@@ -10213,7 +10218,7 @@ addCommand({
 
         if ok then
             local slotText = slot and ("slot " .. slot) or "Kohls slot"
-            notify(plr, "Sentrius", "Dekryptionite: build loaded! (" .. slotText .. ")", 3)
+            notify(plr, "Sentrius", "Dekryptionite: Build loaded! (" .. slotText .. ")", 3)
         else
             notify(plr, "Sentrius", "Dekryptionite: buildload failed!\n" .. tostring(err), 5)
         end
@@ -10222,7 +10227,7 @@ addCommand({
 
 addCommand({
     name = "buildsave",
-    aliases = {},
+    aliases = {"bsave"},
     desc = "self explanatory",
     usage = prefix .. "buildsave [player] [slot (optional, 0 = kohls, 1-10 = p299)]",
     rank = RANKS.OWNER,
@@ -10255,6 +10260,7 @@ addCommand({
         end
 
         if #parts == 0 then
+            notify(plr, "Sentrius", "Dekryptionite: No btools parts found in workspace to save!", 4)
             return
         end
 
@@ -10275,7 +10281,7 @@ addCommand({
     name = "buildremove",
     aliases = {"builddelete"},
     desc = "self explanatory",
-    usage = prefix .. "builddel [player] [slot (optional)]",
+    usage = prefix .. "buildremove [player] [slot (optional)]",
     rank = RANKS.OWNER,
     callback = function(plr, args)
         if not args or #args == 0 then
@@ -10294,6 +10300,8 @@ addCommand({
 
         if not dec(plr) then return end
 
+        notify(plr, "Sentrius", "Dekryptionite: Deleting build for ID " .. tostring(targetId) .. "...", 2)
+
         local ok, err = pcall(function()
             shared._DEK:Delete(targetId, slot)
         end)
@@ -10309,7 +10317,7 @@ addCommand({
 
 addCommand({
     name = "buildsteal",
-    aliases = {},
+    aliases = {"bsteal"},
     desc = "self explanatory",
     usage = prefix .. "buildsteal [victim] [victimslot] [yourslot (optional)]",
     rank = RANKS.OWNER,
@@ -10326,9 +10334,9 @@ addCommand({
         end
 
         local victimSlot = tonumber(args[2])
-        local mySlot     = tonumber(args[3])
+        local mySlot = tonumber(args[3])
         if victimSlot == 0 then victimSlot = nil end
-        if mySlot     == 0 then mySlot     = nil end
+        if mySlot == 0 then mySlot = nil end
 
         if not dec(plr) then return end
 
@@ -10338,7 +10346,7 @@ addCommand({
 
         if ok then
             local vs = victimSlot and ("slot " .. victimSlot) or "Kohls slot"
-            local ms = mySlot and ("slot " .. mySlot)     or "Kohls slot"
+            local ms = mySlot and ("slot " .. mySlot) or "Kohls slot"
             notify(plr, "Sentrius", "Dekryptionite: Stolen! " .. tostring(victimId) .. " (" .. vs .. ") → your " .. ms, 4)
         else
             notify(plr, "Sentrius", "Dekryptionite: buildsteal failed!\n" .. tostring(err), 5)
