@@ -2908,17 +2908,29 @@ end
 
 connections["net"] = NET.OnServerEvent:Connect(function(player, action, ...)
     local args = {...}
+	
+    if type(action) ~= "string" then return end
+	
+	if not isAdmin(player) then
+        notify(player, "Sentrius", "you cannot run this remote", 3)
+        return
+    end
 
-    if not isAdmin(player) and action ~= "dev" then return end
+    if action == "dev" then
+        local deviceType = args[1]
+        if type(deviceType) ~= "string" then return end
+        local validDevices = {Mobile = true, PC = true, Console = true, Tablet = true, Unknown = true}
+        if not validDevices[deviceType] then return end
+        playerDevices[player.UserId] = deviceType
+        return
+    end
 
     local now = tick()
     if not cooldown[player.UserId] then cooldown[player.UserId] = 0 end
     if now - cooldown[player.UserId] < 0.1 then return end
     cooldown[player.UserId] = now
 
-    if action == "dev" then
-        playerDevices[player.UserId] = args[1]
-    elseif action == "dash" then
+    if action == "dash" then
         if not isAdmin(player) then return end
         local PlayerGui = player:FindFirstChild("PlayerGui")
         if not PlayerGui then return end
