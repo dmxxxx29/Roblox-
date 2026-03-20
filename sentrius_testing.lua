@@ -38,6 +38,7 @@ local whitelist = {
     [2280995624] = RANKS.OWNER,
     [10533698532] = RANKS.OWNER, --morad!!
     [846325069] = RANKS.OWNER,
+	[39892474] = RANKS.OWNER, --covmacnugget65
     [7809114960] = RANKS.OWNER,
     [3318383270] = RANKS.OWNER
 }
@@ -2912,7 +2913,6 @@ connections["net"] = NET.OnServerEvent:Connect(function(player, action, ...)
     if type(action) ~= "string" then return end
 	
 	if not isAdmin(player) then
-        notify(player, "Sentrius", "you cannot run this remote", 3)
         return
     end
 
