@@ -820,6 +820,25 @@ function GetPlayer(targets, me)
     local found = {}
     local targ = tostring(targets):lower()
 
+    if targ:find(",") then
+        local parts = {}
+        for part in targ:gmatch("[^,]+") do
+            part = part:match("^%s*(.-)%s*$")
+            if part and part ~= "" then table.insert(parts, part) end
+        end
+        if #parts == 1 then return GetPlayer(parts[1],me) end
+        local seen = {}
+        for _,part in ipairs(parts) do
+            for _,plr in ipairs(GetPlayer(part,me)) do
+                if not seen[plr.UserId] then
+                    seen[plr.UserId] = true
+                    table.insert(found, plr)
+                end
+            end
+        end
+        return found
+    end
+
     if targ == "me" then
         return { me }
     elseif targ == "all" then
@@ -2942,6 +2961,7 @@ connections["net"] = NET.OnServerEvent:Connect(function(player, action, ...)
         end
     elseif action == "cmd" then
         if not running then return end
+		if getRank(player) < RANKS.BASICS then return end
         local cmdText = args[1]
         if not cmdText or cmdText == "" then return end
         if cmdText:sub(1, 1) == prefix then
@@ -10381,6 +10401,8 @@ local function connect(plr)
         
         if msg:sub(1,1) ~= prefix then return end
         
+		if getRank(plr) < RANKS.BASICS then return end
+		
         local args = {}
         for w in msg:sub(2):gmatch("%S+") do
             table.insert(args, w)
