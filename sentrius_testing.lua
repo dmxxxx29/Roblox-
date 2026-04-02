@@ -9740,7 +9740,7 @@ addCommand({
     end
 })
 
-addcmd({
+addCommand({
     name = "seeleadonis",
     aliases = {"sadonis","seelesadonis"},
     desc = "Loads seele's bad Adonis admin",
