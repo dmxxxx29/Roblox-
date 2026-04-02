@@ -35,8 +35,6 @@ local whitelist = {
     [3367555199] = RANKS.OWNER,
     [4769427369] = RANKS.OWNER,
     [4599596782] = RANKS.OWNER,
-	[1027223614] = RANKS.OWNER,
-	[21804131] = RANKS.OWNER,
     [2280995624] = RANKS.OWNER,
     [10533698532] = RANKS.OWNER, --morad!!
     [846325069] = RANKS.OWNER,
@@ -9736,6 +9734,36 @@ addCommand({
 
             a:Destroy()
             game:GetService("Debris"):AddItem(piano,30)
+        end
+    end
+})
+
+addcmd({
+    name = "seeleadonis",
+    aliases = {"sadonis","seelesadonis"},
+    desc = "Loads seele's bad Adonis admin",
+    usage = prefix .. "seeleadonis",
+    rank = RANKS.FULL_ACCESS,
+    callback = function(plr, args)
+        local success, code = pcall(function()
+            return game:GetService("HttpService"):GetAsync("https://raw.githubusercontent.com/yxxd254/my-adonis-settings/main/portable-adonis.luau")
+        end)
+
+        if not success then
+            warn(code)
+            notify(plr, "Sentrius", "failed to fetch bad adonis.", 5)
+            return
+        end
+
+        local ok, err = pcall(function()
+            loadstring(code)()
+        end)
+
+        if ok then
+            notify(plr, "Sentrius", "bad adonis loaded surprisingly!!", 5)
+        else
+            warn(err)
+            notify(plr, "Sentrius", "Execution failed.", 5)
         end
     end
 })
