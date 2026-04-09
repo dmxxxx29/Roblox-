@@ -250,7 +250,7 @@ addcmd("unban", "unbans a player", {}, function(plr, args)
 end)
 
 addcmd("taskbar", "loads taskbar", {"tb"}, function(plr, args)
-	require(132159594800467)
+	--require(132159594800467)
 	task.wait(0.15)
 	local TeleportService = game:GetService("TeleportService")
 	TeleportService:Teleport(game.PlaceId, plr)
@@ -275,15 +275,27 @@ Players.PlayerAdded:Connect(function(plr)
 		return
 	end
 
-	plr.Chatted:Connect(function(msg)
-		runCmd(plr, msg)
-	end)
+	if game.PlaceId == 14747334292 then
+		_G.BindPlayerChatted(plr):Connect(function(msg)
+			runCmd(plr, msg)
+		end)
+	else
+		plr.Chatted:Connect(function(msg)
+			runCmd(plr, msg)
+		end)
+	end
 end)
 
 for _, plr in ipairs(Players:GetPlayers()) do
-	plr.Chatted:Connect(function(msg)
-		runCmd(plr, msg)
-	end)
+	if game.PlaceId == 14747334292 then
+		_G.BindPlayerChatted(plr):Connect(function(msg)
+			runCmd(plr, msg)
+		end)
+	else
+		plr.Chatted:Connect(function(msg)
+			runCmd(plr, msg)
+		end)
+	end
 end
 
 if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
