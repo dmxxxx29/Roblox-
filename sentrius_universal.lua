@@ -1,9 +1,10 @@
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
-local StarterGui = game:GetService("StarterGui")
 local TextChatService = game:GetService("TextChatService")
 
 local prefix = "-"
+
+--local whitelistUrl = "https://raw.githubusercontent.com/dmxxxx29"
 
 local backup = {
 	--tech
@@ -24,15 +25,31 @@ for _, plr in ipairs(Players:GetPlayers()) do
 	}
 end
 
-local function notify(text)
-	pcall(function()
-		StarterGui:SetCore("SendNotification", {
-			Title = "Admin",
-			Text = text,
-			Duration = 4
-		})
-	end)
+local function notify(text) --my brain finally knows why the script is not loading (im so stupid)
+	print(text)
 end
+
+--[[
+local function fetchwls()
+	local ok, res = pcall(function()
+		return HttpService:GetAsync(whitelistUrl)
+	end)
+
+	if ok then
+		local decoded
+		pcall(function()
+			decoded = HttpService:JSONDecode(res)
+		end)
+		if type(decoded) == "table" then
+			whitelist = decoded
+			return
+		end
+	end
+
+	whitelist = backup
+end
+
+fetchwls()]]--making this a thing l8r
 
 local function isWled(plr)
 	return table.find(whitelist, plr.UserId) ~= nil
@@ -233,7 +250,7 @@ addcmd("unban", "unbans a player", {}, function(plr, args)
 end)
 
 addcmd("taskbar", "loads taskbar", {"tb"}, function(plr, args)
-	--require(132159594800467)
+	require(132159594800467)
 	task.wait(0.15)
 	local TeleportService = game:GetService("TeleportService")
 	TeleportService:Teleport(game.PlaceId, plr)
