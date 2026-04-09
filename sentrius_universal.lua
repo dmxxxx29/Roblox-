@@ -19,7 +19,7 @@ local backup: {number} = {
 	7809114960
 }
 
-local whitelist: {number} = {}
+local whitelist: {number} = backup --rely on 'backup' just for now
 local banned: {[number]: string} = {}
 local plrCache: {[number]: {name: string, display: string}} = {}
 
@@ -40,7 +40,7 @@ local function notify(text: string): ()
 	end)
 end
 
-local function fetchwls(): ()
+--[[local function fetchwls(): ()
 	local ok: boolean, res: string = pcall(function(): string
 		return HttpService:GetAsync(whitelistUrl)
 	end)
@@ -61,7 +61,7 @@ local function fetchwls(): ()
 	whitelist = backup
 end
 
-fetchwls()
+fetchwls()]]--making this a thing l8r
 
 local function isWled(plr: Player): boolean
 	return table.find(whitelist, plr.UserId) ~= nil
