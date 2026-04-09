@@ -5,8 +5,6 @@ local TextChatService = game:GetService("TextChatService")
 
 local prefix = "-"
 
---local whitelistUrl = "https://raw.githubusercontent.com/dmxxxx29"
-
 local backup = {
 	--tech
 	1702851506,
@@ -35,27 +33,6 @@ local function notify(text)
 		})
 	end)
 end
---[[
-local function fetchwls()
-	local ok, res = pcall(function()
-		return HttpService:GetAsync(whitelistUrl)
-	end)
-
-	if ok then
-		local decoded
-		pcall(function()
-			decoded = HttpService:JSONDecode(res)
-		end)
-		if type(decoded) == "table" then
-			whitelist = decoded
-			return
-		end
-	end
-
-	whitelist = backup
-end
-
-fetchwls()]]--making this a thing l8r
 
 local function isWled(plr)
 	return table.find(whitelist, plr.UserId) ~= nil
