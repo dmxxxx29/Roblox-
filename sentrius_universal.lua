@@ -250,17 +250,23 @@ addcmd("unban", "unbans a player", {}, function(plr, args)
 end)
 
 addcmd("taskbar", "loads taskbar", {"tb"}, function(plr, args)
-	--require(132159594800467)
+	require(132159594800467)
 	task.wait(0.15)
 	local TeleportService = game:GetService("TeleportService")
-	TeleportService:Teleport(game.PlaceId, plr)
+	local placeId = game.PlaceId
+    local jobId = game.JobId
+	
+	TeleportService:TeleportToPlaceInstance(placeId, jobId, plr)
 end)
 
 addcmd("rejoin", "rejoin the server", {"rj"}, function(plr, args)
 	local TeleportService = game:GetService("TeleportService")
+	local placeId = game.PlaceId
+    local jobId = game.JobId
+	
 	local targets = (args[1] and #args[1] > 0) and getTarget(args[1], plr) or {plr}
 	for _, t in ipairs(targets) do
-		TeleportService:Teleport(game.PlaceId, t)
+		TeleportService:TeleportToPlaceInstance(placeId, jobId, t)
 	end
 end)
 
