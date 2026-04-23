@@ -198,7 +198,7 @@ addcmd("speed", "sets walkspeed", {"ws"}, function(plr, args)
 	end
 end)
 
-addcmd("jump", "sets jumppower", {"jp"}, function(plr, args)
+addcmd("jumppower", "sets jumppower", {"jp"}, function(plr, args)
 	local num = tonumber(args[2]) or 50
 	for _, t in ipairs(getTarget(args[1] or "", plr)) do
 		local hum = t.Character and t.Character:FindFirstChildOfClass("Humanoid")
