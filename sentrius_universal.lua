@@ -54,7 +54,7 @@ local function fetchwls()
 
 		if valid then
 			whitelist = decoded
-			print("whitelist updated from github")
+			--print("whitelist updated from github")
 			return
 		end
 	end
