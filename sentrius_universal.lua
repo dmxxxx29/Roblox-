@@ -4,17 +4,13 @@ local TextChatService = game:GetService("TextChatService")
 
 local prefix = "-"
 
---local whitelistUrl = "https://raw.githubusercontent.com/dmxxxx29"
-
 local backup = {
-	--tech
-	1702851506,
-	--me
-	3421321085,
-	7809114960
+	{ id = 1702851506, tag = "tech" },
+	{ id = 3421321085, tag = "me" },
+	{ id = 7809114960, tag = "alt" }
 }
 
-local whitelist = backup --rely on 'backup' just for now
+local whitelist = backup
 local banned = {}
 local plrCache = {}
 
@@ -25,34 +21,62 @@ for _, plr in ipairs(Players:GetPlayers()) do
 	}
 end
 
-local function notify(text) --my brain finally knows why the script is not loading (im so stupid)
+local function notify(text)
 	print(text)
 end
 
---[[
+local whitelistUrl = "https://raw.githubusercontent.com/dmxxxx29/Roblox-/main/whitelist.json"
+
 local function fetchwls()
 	local ok, res = pcall(function()
-		return HttpService:GetAsync(whitelistUrl)
+		return HttpService:GetAsync(whitelistUrl, true)
 	end)
 
-	if ok then
-		local decoded
-		pcall(function()
-			decoded = HttpService:JSONDecode(res)
-		end)
-		if type(decoded) == "table" then
+	if not ok then
+		warn("couldn't fetch whitelist, using backup")
+		whitelist = backup
+		return
+	end
+
+	local success, decoded = pcall(function()
+		return HttpService:JSONDecode(res)
+	end)
+
+	if success and type(decoded) == "table" then
+		local valid = true
+
+		for _, v in ipairs(decoded) do
+			if type(v) ~= "table" or type(v.id) ~= "number" then
+				valid = false
+				break
+			end
+		end
+
+		if valid then
 			whitelist = decoded
+			print("whitelist updated from github")
 			return
 		end
 	end
 
+	warn("whitelist didn't load properly, using backup")
 	whitelist = backup
 end
 
-fetchwls()]]--making this a thing l8r
+fetchwls()
 
 local function isWled(plr)
-	return table.find(whitelist, plr.UserId) ~= nil
+	local uid = plr.UserId
+
+	for _, data in ipairs(whitelist) do
+		if type(data) == "table" then
+			if data.id == uid then
+				return true, data.tag
+			end
+		end
+	end
+
+	return false
 end
 
 local function getTarget(str, speaker)
@@ -198,7 +222,7 @@ addcmd("speed", "sets walkspeed", {"ws"}, function(plr, args)
 	end
 end)
 
-addcmd("jumppower", "sets jumppower", {"jp"}, function(plr, args)
+addcmd("jump", "sets jumppower", {"jp"}, function(plr, args)
 	local num = tonumber(args[2]) or 50
 	for _, t in ipairs(getTarget(args[1] or "", plr)) do
 		local hum = t.Character and t.Character:FindFirstChildOfClass("Humanoid")
@@ -254,21 +278,35 @@ addcmd("taskbar", "loads taskbar", {"tb"}, function(plr, args)
 	task.wait(0.15)
 	local TeleportService = game:GetService("TeleportService")
 	local placeId = game.PlaceId
-    local jobId = game.JobId
-	
+	local jobId = game.JobId
 	TeleportService:TeleportToPlaceInstance(placeId, jobId, plr)
 end)
 
 addcmd("rejoin", "rejoin the server", {"rj"}, function(plr, args)
 	local TeleportService = game:GetService("TeleportService")
 	local placeId = game.PlaceId
-    local jobId = game.JobId
-	
+	local jobId = game.JobId
 	local targets = (args[1] and #args[1] > 0) and getTarget(args[1], plr) or {plr}
 	for _, t in ipairs(targets) do
 		TeleportService:TeleportToPlaceInstance(placeId, jobId, t)
 	end
 end)
+
+local isNewChat = TextChatService.ChatVersion == Enum.ChatVersion.TextChatService
+
+local function bindChat(plr)
+	if isNewChat then return end
+
+	if game.PlaceId == 14747334292 then
+		_G.BindPlayerChatted(plr):Connect(function(msg)
+			runCmd(plr, msg)
+		end)
+	else
+		plr.Chatted:Connect(function(msg)
+			runCmd(plr, msg)
+		end)
+	end
+end
 
 Players.PlayerAdded:Connect(function(plr)
 	plrCache[plr.UserId] = {
@@ -281,41 +319,30 @@ Players.PlayerAdded:Connect(function(plr)
 		return
 	end
 
-	if game.PlaceId == 14747334292 then
-		_G.BindPlayerChatted(plr):Connect(function(msg)
-			runCmd(plr, msg)
-		end)
-	else
-		plr.Chatted:Connect(function(msg)
-			runCmd(plr, msg)
-		end)
-	end
+	bindChat(plr)
 end)
 
 for _, plr in ipairs(Players:GetPlayers()) do
-	if game.PlaceId == 14747334292 then
-		_G.BindPlayerChatted(plr):Connect(function(msg)
-			runCmd(plr, msg)
-		end)
-	else
-		plr.Chatted:Connect(function(msg)
-			runCmd(plr, msg)
-		end)
-	end
+	bindChat(plr)
 end
 
-if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+if isNewChat then
 	TextChatService.OnIncomingMessage = function(message)
 		local src = message.TextSource
-		if not src then return message end
+		if not src then return end
 
 		local plr = Players:GetPlayerByUserId(src.UserId)
 		if plr then
 			runCmd(plr, message.Text)
 		end
-
-		return message
 	end
 end
+
+task.spawn(function()
+	while true do
+		fetchwls()
+		task.wait(60)
+	end
+end)
 
 notify("admin loaded")
