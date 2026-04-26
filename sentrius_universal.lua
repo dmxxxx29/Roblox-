@@ -25,6 +25,7 @@ local function notify(text)
 	print(text)
 end
 
+local versionUrl = "https://raw.githubusercontent.com/dmxxxx29/Roblox-/main/sentrius_universal_version.txt"
 local whitelistUrl = "https://raw.githubusercontent.com/dmxxxx29/Roblox-/main/whitelist.json" --if you're seeing this ask tech for whitelist although it's up to me but still ask tech for whitelist
 
 --maybe i will make a temporary whitelist but i dont think i will
@@ -758,3 +759,13 @@ task.spawn(function()
 		task.wait(60)
 	end
 end)
+
+local success, response = pcall(function()
+	return HttpService:GetAsync(versionUrl)
+end)
+
+if success then
+	notify("Universal Version (UV): " .. response)
+else
+	notify("Failed to fetch version")
+end
