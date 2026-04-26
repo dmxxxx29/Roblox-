@@ -81,6 +81,40 @@ local function isWled(plr)
 	return false
 end
 
+local function hasTag(tag, required)
+	local roles = {}
+	for role in tag:gmatch("%S+") do
+		roles[role] = true
+	end
+
+	if type(required) == "table" then
+		for _, entry in ipairs(required) do
+			if tag == entry then
+				return true
+			end
+		end
+		return false
+	end
+
+	if required:find(",") then
+		for req in required:gmatch("[^,]+") do
+			req = req:match("^%s*(.-)%s*$")
+			if not roles[req] then
+				return false
+			end
+		end
+		return true
+	end
+
+	for req in required:gmatch("%S+") do
+		if roles[req] then
+			return true
+		end
+	end
+
+	return false
+end
+
 local function getTarget(str, speaker)
 	local found = {}
 	local targ = tostring(str):lower()
@@ -165,9 +199,10 @@ end
 
 local commands = {}
 
-local function addcmd(name, desc, aliases, callback)
+local function addcmd(name, desc, aliases, tag, callback)
 	local cmd = {
 		desc = desc,
+		tag = tag,
 		callback = callback
 	}
 
@@ -181,7 +216,8 @@ local function addcmd(name, desc, aliases, callback)
 end
 
 local function runCmd(plr, msg)
-	if not isWled(plr) then return end
+	local wled, tag = isWled(plr)
+	if not wled then return end
 	if msg:sub(1, #prefix) ~= prefix then return end
 
 	local args = {}
@@ -196,12 +232,14 @@ local function runCmd(plr, msg)
 	local cmd = commands[cmdName]
 	if not cmd then return end
 
+	if cmd.tag and not hasTag(tag, cmd.tag) then return end
+
 	pcall(function()
 		cmd.callback(plr, args)
 	end)
 end
 
-addcmd("kick", "kicks a playuh", {}, function(plr, args)
+addcmd("kick", "kicks a playuh", {}, {"tech", "tech alt", "me", "me alt", "Palamode", "ROBLOXIanGuy", "ROBLOXIanGuy alt"}, function(plr, args)
 	if not args[1] or args[1] == "" then
 		notify("kick: specify a target")
 		return
@@ -212,14 +250,14 @@ addcmd("kick", "kicks a playuh", {}, function(plr, args)
 	end
 end)
 
-addcmd("respawn", "respawns a playuh", {"res"}, function(plr, args)
+addcmd("respawn", "respawns a playuh", {"res"}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	for _, t in ipairs(targets) do
 		t:LoadCharacter()
 	end
 end)
 
-addcmd("speed", "sets walkspeed", {"ws"}, function(plr, args)
+addcmd("speed", "sets walkspeed", {"ws"}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	local num = tonumber(args[2]) or 16
 	for _, t in ipairs(targets) do
@@ -230,7 +268,7 @@ addcmd("speed", "sets walkspeed", {"ws"}, function(plr, args)
 	end
 end)
 
-addcmd("jumppower", "sets jumppower", {"jp"}, function(plr, args)
+addcmd("jumppower", "sets jumppower", {"jp"}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	local num = tonumber(args[2]) or 50
 	for _, t in ipairs(targets) do
@@ -241,7 +279,7 @@ addcmd("jumppower", "sets jumppower", {"jp"}, function(plr, args)
 	end
 end)
 
-addcmd("ban", "serverbans a playuh", {}, function(plr, args)
+addcmd("ban", "serverbans a playuh", {}, {"tech", "tech alt", "me", "me alt", "Palamode", "ROBLOXIanGuy", "ROBLOXIanGuy alt"}, function(plr, args)
 	if not args[1] or args[1] == "" then
 		notify("ban: specify a target")
 		return
@@ -258,7 +296,7 @@ addcmd("ban", "serverbans a playuh", {}, function(plr, args)
 	end
 end)
 
-addcmd("unban", "unbans a playuh", {}, function(plr, args)
+addcmd("unban", "unbans a playuh", {}, {"tech", "tech alt", "me", "me alt", "Palamode", "ROBLOXIanGuy", "ROBLOXIanGuy alt"}, function(plr, args)
 	local query = (args[1] or ""):lower()
 
 	for uid, data in pairs(plrCache) do
@@ -286,7 +324,7 @@ addcmd("unban", "unbans a playuh", {}, function(plr, args)
 	notify("Unbanned UserId: " .. uid)
 end)
 
-addcmd("taskbar", "loads taskbar", {"tb"}, function(plr, args)
+addcmd("taskbar", "loads taskbar", {"tb"}, {"tech", "tech alt", "me", "me alt", "Palamode", "ROBLOXIanGuy", "ROBLOXIanGuy alt"}, function(plr, args) --maybe in future, people will essentially get whitelisted after all
 	require(132159594800467)
 	task.wait(0.15)
 	local TeleportService = game:GetService("TeleportService")
@@ -295,7 +333,7 @@ addcmd("taskbar", "loads taskbar", {"tb"}, function(plr, args)
 	TeleportService:TeleportToPlaceInstance(placeId, jobId, plr)
 end)
 
-addcmd("rejoin", "rejoin the serveh", {"rj"}, function(plr, args)
+addcmd("rejoin", "rejoin the serveh", {"rj"}, nil, function(plr, args)
 	local TeleportService = game:GetService("TeleportService")
 	local placeId = game.PlaceId
 	local jobId = game.JobId
@@ -305,7 +343,7 @@ addcmd("rejoin", "rejoin the serveh", {"rj"}, function(plr, args)
 	end
 end)
 
-addcmd("kill", "kills a playuh", {}, function(plr, args)
+addcmd("kill", "kills a playuh", {}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	for _, t in ipairs(targets) do
 		local hum = t.Character and t.Character:FindFirstChildOfClass("Humanoid")
@@ -315,7 +353,7 @@ addcmd("kill", "kills a playuh", {}, function(plr, args)
 	end
 end)
 
-addcmd("fling", "flings a playuh", {}, function(plr, args)
+addcmd("fling", "flings a playuh", {}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	for _, t in ipairs(targets) do
 		local char = t.Character
@@ -335,7 +373,7 @@ addcmd("fling", "flings a playuh", {}, function(plr, args)
 	end
 end)
 
-addcmd("invisible", "makes a playuh invisible", {"invis"}, function(plr, args)
+addcmd("invisible", "makes a playuh invisible", {"invis"}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	for _, t in ipairs(targets) do
 		local char = t.Character
@@ -350,7 +388,7 @@ addcmd("invisible", "makes a playuh invisible", {"invis"}, function(plr, args)
 	end
 end)
 
-addcmd("visible", "makes a playuh visible", {"vis"}, function(plr, args)
+addcmd("visible", "makes a playuh visible", {"vis"}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	for _, t in ipairs(targets) do
 		local char = t.Character
@@ -365,7 +403,7 @@ addcmd("visible", "makes a playuh visible", {"vis"}, function(plr, args)
 	end
 end)
 
-addcmd("gear", "gives gear to a playuh by id or name", {"fgear"}, function(plr, args)
+addcmd("gear", "gives gear to a playuh by id or name", {"fgear"}, nil, function(plr, args)
 	if not args or #args == 0 then
 		notify("gear: no arguments provided")
 		return
@@ -435,7 +473,7 @@ addcmd("gear", "gives gear to a playuh by id or name", {"fgear"}, function(plr, 
 	asset:Destroy()
 end)
 
-addcmd("health", "sets a playuh's health", {"hp"}, function(plr, args)
+addcmd("health", "sets a playuh's health", {"hp"}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	local num = tonumber(args[2]) or 100
 	for _, t in ipairs(targets) do
@@ -447,7 +485,7 @@ addcmd("health", "sets a playuh's health", {"hp"}, function(plr, args)
 	end
 end)
 
-addcmd("damage", "damages a playuh", {"dmg"}, function(plr, args)
+addcmd("damage", "damages a playuh", {"dmg"}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	local num = tonumber(args[2]) or 10
 	for _, t in ipairs(targets) do
@@ -458,7 +496,7 @@ addcmd("damage", "damages a playuh", {"dmg"}, function(plr, args)
 	end
 end)
 
-addcmd("sit", "forces a playuh to sit", {}, function(plr, args)
+addcmd("sit", "forces a playuh to sit", {}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	for _, t in ipairs(targets) do
 		local hum = t.Character and t.Character:FindFirstChildOfClass("Humanoid")
@@ -468,7 +506,7 @@ addcmd("sit", "forces a playuh to sit", {}, function(plr, args)
 	end
 end)
 
-addcmd("freeze", "freezes a playuh", {}, function(plr, args)
+addcmd("freeze", "freezes a playuh", {}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	for _, t in ipairs(targets) do
 		if not t.Character then continue end
@@ -480,7 +518,7 @@ addcmd("freeze", "freezes a playuh", {}, function(plr, args)
 	end
 end)
 
-addcmd("unfreeze", "unfreezes a playuh", {}, function(plr, args)
+addcmd("unfreeze", "unfreezes a playuh", {}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	for _, t in ipairs(targets) do
 		if not t.Character then continue end
@@ -492,7 +530,7 @@ addcmd("unfreeze", "unfreezes a playuh", {}, function(plr, args)
 	end
 end)
 
-addcmd("god", "gives a playuh infinite health", {}, function(plr, args)
+addcmd("god", "gives a playuh infinite health", {}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	for _, t in ipairs(targets) do
 		local hum = t.Character and t.Character:FindFirstChildOfClass("Humanoid")
@@ -503,7 +541,7 @@ addcmd("god", "gives a playuh infinite health", {}, function(plr, args)
 	end
 end)
 
-addcmd("ungod", "removes god mode from a playuh", {}, function(plr, args)
+addcmd("ungod", "removes god mode from a playuh", {}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	for _, t in ipairs(targets) do
 		local hum = t.Character and t.Character:FindFirstChildOfClass("Humanoid")
@@ -514,7 +552,7 @@ addcmd("ungod", "removes god mode from a playuh", {}, function(plr, args)
 	end
 end)
 
-addcmd("size", "resizes a playuh's charactuh", {}, function(plr, args)
+addcmd("size", "resizes a playuh's charactuh", {}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	local num = tonumber(args[2]) or 1
 
@@ -524,7 +562,6 @@ addcmd("size", "resizes a playuh's charactuh", {}, function(plr, args)
 		local hum = char:FindFirstChildOfClass("Humanoid")
 		if not hum then continue end
 
-		local humanoidDesc = hum:FindFirstChildOfClass("HumanoidDescription")
 		if hum.RigType == Enum.HumanoidRigType.R15 then
 			local desc = hum:GetAppliedDescription()
 			desc.HeadScale = num
@@ -555,7 +592,7 @@ addcmd("size", "resizes a playuh's charactuh", {}, function(plr, args)
 	end
 end)
 
-addcmd("char", "loads a charactuh appearance by userid or username", {}, function(plr, args)
+addcmd("char", "loads a charactuh appearance by userid or username", {}, nil, function(plr, args)
 	if not args[1] or args[1] == "" then
 		notify("char: no args provided")
 		return
@@ -608,7 +645,7 @@ addcmd("char", "loads a charactuh appearance by userid or username", {}, functio
 	end
 end)
 
-addcmd("bring", "brings a playuh to you", {}, function(plr, args)
+addcmd("bring", "brings a playuh to you", {}, nil, function(plr, args)
 	if not args[1] or args[1] == "" then
 		notify("bring: specify a target")
 		return
@@ -629,7 +666,7 @@ addcmd("bring", "brings a playuh to you", {}, function(plr, args)
 	end
 end)
 
-addcmd("goto", "teleports you to a playuh", {"to"}, function(plr, args)
+addcmd("goto", "teleports you to a playuh", {"to"}, nil, function(plr, args)
 	if not args[1] or args[1] == "" then
 		notify("goto: specify a target")
 		return
@@ -654,7 +691,7 @@ addcmd("goto", "teleports you to a playuh", {"to"}, function(plr, args)
 	end
 end)
 
-addcmd("reset", "reset player charactuh", {"re"}, function(plr, args)
+addcmd("reset", "reset player charactuh", {"re"}, nil, function(plr, args)
 	local targets = (args[1] and args[1] ~= "") and getTarget(args[1], plr) or {plr}
 	for _, t in ipairs(targets) do
 		if t.Character and t.Character:FindFirstChild("HumanoidRootPart") then
